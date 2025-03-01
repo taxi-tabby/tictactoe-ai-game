@@ -44,7 +44,7 @@ export default function GameStartScreen() {
 
 		async function assetLoading() {
 			if (!bgmAudioRef.current) {
-				bgmAudioRef.current = new AudioPlayer('/game/asset/music/lobbybgm.mp3', {loop: true, volume: 0.5});
+				bgmAudioRef.current = new AudioPlayer('./game/asset/music/lobbybgm.mp3', {loop: true, volume: 0.5});
 			}
 		}
 
@@ -111,7 +111,7 @@ export default function GameStartScreen() {
 								animate={{ rotate: [0, 10, -10, 0] }}
 								transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
 							>
-								<img src="/game/asset/image/logo(white).png" alt="Logo image" title="AI Generated image :)" className="w-[160px]" />
+								<img src="./game/asset/image/logo(white).png" alt="Logo image" title="AI Generated image :)" className="w-[160px]" />
 							</motion.div>
 							<motion.div whileHover={{ opacity: [1, 0.5, 1] }} whileTap={{ opacity: 1 }} transition={{ duration: 0.8, repeat: Infinity }} className="px-2 py-1 text-white hover:bg-blue-700 text-[24px] cursor-pointer">Start Game</motion.div>
 							<motion.div whileHover={{ opacity: [1, 0.5, 1] }} whileTap={{ opacity: 1 }} transition={{ duration: 0.8, repeat: Infinity }} className="px-2 py-1 text-white hover:bg-blue-700 text-[24px] cursor-pointer">Settings</motion.div>
@@ -125,7 +125,7 @@ export default function GameStartScreen() {
 								animate={{ y: [0, -50, 0] }}
 								transition={{ duration: 0.8, repeat: Infinity, ease: [0.445, 0.05, 0.55, 0.95] }} // easeInOutSine equivalent
 							>
-								<img src="/game/asset/image/cat(main).png_짜치니까_이거_쓰지말자ㅋㅋ" alt="아직 정해지지 않음" title="아직 정해지지 않음" className="" />
+								<img src="./game/asset/image/cat(main).png_짜치니까_이거_쓰지말자ㅋㅋ" alt="아직 정해지지 않음" title="아직 정해지지 않음" className="" />
 							</motion.div>
 						</div>
 
