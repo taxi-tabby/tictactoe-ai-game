@@ -5,11 +5,20 @@ import { motion } from "framer-motion";
 import * as tf from '@tensorflow/tfjs';
 import Lottie from "lottie-react";
 import useSound from 'use-sound';
-
+import { Swiper, SwiperSlide } from 'swiper/react';
 
 import assetLoadingAnimation from './assetLoad.json';
 import MonitorComponent from "../component/monitorComponent";
 import { AudioPlayer } from "../../classes/audio";
+
+
+import 'swiper/css';
+import 'swiper/css/effect-fade';
+import 'swiper/css/pagination';
+import 'swiper/css/navigation';
+
+import { Autoplay, EffectFade, Navigation, Pagination } from 'swiper/modules';
+
 
 export default function GameStartScreen() {
 	const [isSFXMuted, setIsSFXMuted] = useState(false);
@@ -22,9 +31,13 @@ export default function GameStartScreen() {
 
 
 	//노래 재생
-	const bgmAudioRef = useRef<AudioPlayer | null>(null); // useRef를 사용해 오디오 객체 저장
+	const bgmAudioRef = useRef<AudioPlayer | null>(null);
+	const ingameAudioRef = useRef<AudioPlayer | null>(null);
 
 
+	function notready() {
+		alert('아직 한참 개발 중.');
+	}
 
 
 	//화면 전환 시 처리
@@ -33,19 +46,14 @@ export default function GameStartScreen() {
 			bgmAudioRef.current?.play();
 			console.log("main bgm run!");
 		}
-
-
-
 	}, [sceneName]);
 
 
 	useEffect(() => {
 
-
 		async function assetLoading() {
-			if (!bgmAudioRef.current) {
-				bgmAudioRef.current = new AudioPlayer('./game/asset/music/lobbybgm.mp3', {loop: true, volume: 0.5});
-			}
+			if (!bgmAudioRef.current) bgmAudioRef.current = new AudioPlayer('./game/asset/music/lobbybgm.mp3', {loop: true, volume: 0.4});
+			if (!ingameAudioRef.current) ingameAudioRef.current = new AudioPlayer('./game/asset/music/ingame.mp3', {loop: true, volume: 0.4});
 		}
 
 		async function load() {
@@ -103,9 +111,9 @@ export default function GameStartScreen() {
 
 			{sceneName === 'main' && (
 				<MonitorComponent>
-					<div className="flex justify-between w-full h-full">
+					<div className="flex justify-between w-full h-full z-[2]">
 
-						<div className="flex flex-col space-y-4 mt-[60px] ml-[60px]">
+						<div className="flex flex-col space-y-4 pt-[60px] pl-[60px] bg-gradient-to-r from-black/[0.8] to-transparent">
 							<motion.div
 								className="mb-[30px]"
 								animate={{ rotate: [0, 10, -10, 0] }}
@@ -113,10 +121,11 @@ export default function GameStartScreen() {
 							>
 								<img src="./game/asset/image/logo(white).png" alt="Logo image" title="AI Generated image :)" className="w-[160px]" />
 							</motion.div>
-							<motion.div whileHover={{ opacity: [1, 0.5, 1] }} whileTap={{ opacity: 1 }} transition={{ duration: 0.8, repeat: Infinity }} className="px-2 py-1 text-white hover:bg-blue-700 text-[24px] cursor-pointer">Start Game</motion.div>
-							<motion.div whileHover={{ opacity: [1, 0.5, 1] }} whileTap={{ opacity: 1 }} transition={{ duration: 0.8, repeat: Infinity }} className="px-2 py-1 text-white hover:bg-blue-700 text-[24px] cursor-pointer">Settings</motion.div>
-							<motion.div whileHover={{ opacity: [1, 0.5, 1] }} whileTap={{ opacity: 1 }} transition={{ duration: 0.8, repeat: Infinity }} className="px-2 py-1 text-white hover:bg-blue-700 text-[24px] cursor-pointer">Exit</motion.div>
-							<motion.div whileHover={{ opacity: [1, 0.5, 1] }} whileTap={{ opacity: 1 }} transition={{ duration: 0.8, repeat: Infinity }} className="px-2 py-1 text-white hover:bg-blue-700 text-[24px] cursor-pointer">License</motion.div>
+							<motion.div whileHover={{ opacity: [1, 0.5, 1] }} whileTap={{ opacity: 1 }} transition={{ duration: 0.8, repeat: Infinity }} className="px-2 py-1 text-white hover:bg-blue-700 text-[24px] cursor-pointer" onClick={notready}>Start Game</motion.div>
+							<motion.div whileHover={{ opacity: [1, 0.5, 1] }} whileTap={{ opacity: 1 }} transition={{ duration: 0.8, repeat: Infinity }} className="px-2 py-1 text-white hover:bg-blue-700 text-[24px] cursor-pointer" onClick={notready}>What is this?</motion.div>
+							<motion.div whileHover={{ opacity: [1, 0.5, 1] }} whileTap={{ opacity: 1 }} transition={{ duration: 0.8, repeat: Infinity }} className="px-2 py-1 text-white hover:bg-blue-700 text-[24px] cursor-pointer" onClick={notready}>Settings</motion.div>
+							{/* <motion.div whileHover={{ opacity: [1, 0.5, 1] }} whileTap={{ opacity: 1 }} transition={{ duration: 0.8, repeat: Infinity }} className="px-2 py-1 text-white hover:bg-blue-700 text-[24px] cursor-pointer onClick={notready}">Exit</motion.div> */}
+							<motion.div whileHover={{ opacity: [1, 0.5, 1] }} whileTap={{ opacity: 1 }} transition={{ duration: 0.8, repeat: Infinity }} className="px-2 py-1 text-white hover:bg-blue-700 text-[24px] cursor-pointer" onClick={notready}>License</motion.div>
 						</div>
 
 						<div className="flex flex-col items-center justify-end h-full">
@@ -129,6 +138,34 @@ export default function GameStartScreen() {
 							</motion.div>
 						</div>
 
+					</div>
+					<div className="absolute inset-0 z-[1]">
+						<Swiper
+							slidesPerView={1}
+							spaceBetween={30}
+							loop={true}
+							effect={'fade'}
+							autoplay={{
+								delay: 2400,
+								disableOnInteraction: false
+							}}
+							
+							navigation={false}
+							modules={[Autoplay, EffectFade, Pagination, Navigation]}
+							className="w-full h-full"
+						>
+							{Array.from({ length: 31 }, (_, index) => index + 1)
+								.sort(() => Math.random() - 0.5)
+								.map((num) => (
+									<SwiperSlide key={num}>
+										<div
+											className="w-full h-full bg-cover bg-center"
+											style={{ backgroundImage: `url(./game/asset/image/lobbybg/bg${num}.jpg)` }}
+											title={`bg${num}`}
+										></div>
+									</SwiperSlide>
+								))}
+						</Swiper>
 					</div>
 				</MonitorComponent>
 			)}
