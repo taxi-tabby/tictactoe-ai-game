@@ -1,15 +1,9 @@
 import './App.css';
+import GameSceneComponent from './components/scene/game';
 
 function App() {
 	return (
-		<div className="App">
-
-
-			<div className='text-red-500'>
-				xxxx
-			</div>
-
-		</div>
+		<GameSceneComponent></GameSceneComponent>
 	);
 }
 
