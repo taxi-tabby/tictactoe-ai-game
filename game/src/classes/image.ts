@@ -37,6 +37,11 @@ export class ImageLoader {
         return this.images.get(key);
     }
 
+    getOriginPath(key: string): string | undefined {
+        const img = this.images.get(key);
+        return img ? img.src : undefined;
+    }
+
     getImageAsBinary(key: string): Promise<Uint8Array | undefined> {
         return new Promise((resolve, reject) => {
             const img = this.images.get(key);

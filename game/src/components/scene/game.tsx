@@ -20,6 +20,7 @@ import { ImageLoader } from "../../classes/image";
 import assetList from '../../assets.json';
 
 
+
 import 'swiper/css';
 import 'swiper/css/effect-fade';
 import 'swiper/css/pagination';
@@ -30,6 +31,7 @@ import { Autoplay, EffectFade, Navigation, Pagination } from 'swiper/modules';
 
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
 import { Table } from "@radix-ui/themes";
+import Phaser, { Game } from "phaser";
 
 
 export default function GameStartScreen() {
@@ -47,6 +49,153 @@ export default function GameStartScreen() {
 	const audioLoader = useRef<AudioManager | null>(null);
 	const imageLoader = useRef<ImageLoader | null>(null);
 	const modelLoader = useRef<TicTacToeAI | null>(null);
+
+	//phaser game instance!
+	const game = useRef<Game | null>(null);
+
+	// 누구의 턴인지
+	const [gameTurn, setGameTurn] = useState(0);
+
+	// 게임 보드
+	const gameBoard = useRef<number[][]>([
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0]
+	]);
+
+	function initializeBoard() {
+		const newBoard = [
+			[0, 0, 0],
+			[0, 0, 0],
+			[0, 0, 0]
+		];
+		gameBoard.current = newBoard;
+	}
+
+	function chooseRandomTurn() {
+		const randomTurn = Math.floor(Math.random() * 2);
+		setGameTurn(randomTurn);
+	}
+
+	function initializeGame() {
+		initializeBoard();
+		chooseRandomTurn();
+	}
+
+	//승리체크
+    function checkWinner() {
+        const winPatterns = [
+            [[0, 0], [0, 1], [0, 2]],
+            [[1, 0], [1, 1], [1, 2]],
+            [[2, 0], [2, 1], [2, 2]],
+            [[0, 0], [1, 0], [2, 0]],
+            [[0, 1], [1, 1], [2, 1]],
+            [[0, 2], [1, 2], [2, 2]],
+            [[0, 0], [1, 1], [2, 2]],
+            [[2, 0], [1, 1], [0, 2]]
+        ];
+
+        for (let pattern of winPatterns) {
+            const [a, b, c] = pattern;
+			if (gameBoard.current[a[0]][a[1]] && gameBoard.current[a[0]][a[1]] === gameBoard.current[b[0]][b[1]] && gameBoard.current[a[0]][a[1]] === gameBoard.current[c[0]][c[1]]) {
+				return gameBoard.current[a[0]][a[1]];
+			}
+        }
+        return null;
+    }
+
+
+	const phaserConfig: Phaser.Types.Core.GameConfig = {
+
+		parent: 'phaser-game-container',
+		width: 900,
+		height: 600,
+		type: Phaser.CANVAS,
+		// 배경을 투명하게 설정(디폴트 검정색)
+		transparent: true,
+		// 씬을 관리하는 메소드.
+		scene: {
+			preload() {
+
+			},
+			create() {
+				const backToMainText = this.add.text(830, 30, 'Pause', { color: '#fafafa', fontFamily: 'ArmWrestler', fontSize: '16px', });
+				backToMainText.setInteractive({ useHandCursor: true });
+				backToMainText.on('pointerdown', () => {
+					setGameStatusPaused(true);
+				});
+
+				const graphics = this.add.graphics();
+				graphics.lineStyle(2, 0xffffff, 1);
+
+				for (let i = 0; i < 3; i++) {
+					for (let j = 0; j < 3; j++) {
+						const rect = this.add.rectangle(300 + j * 100 + 50, 200 + i * 100 + 50, 100, 100);
+						rect.setStrokeStyle(2, 0xffffff);
+						rect.setInteractive({ useHandCursor: true });
+						rect.on('pointerdown', () => {
+							console.log(`Square clicked: Row ${i}, Column ${j}`);
+
+							// 클릭 반영 gameBoard 업데이트
+							gameBoard.current[i][j] = 1;
+
+							// 사각형 안에 표시
+							const text = this.add.text(300 + j * 100 + 50, 200 + i * 100 + 50, 'X', { color: '#fafafa', fontFamily: 'ArmWrestler', fontSize: '32px', });
+							text.setOrigin(0.5);
+
+							this.tweens.add({
+								targets: rect,
+								scale: { from: 1, to: 0.8 },
+								duration: 100,
+								yoyo: true,
+								ease: 'Power1'
+							});
+
+							// AI 턴 예측
+							const board = gameBoard.current;
+							modelLoader.current?.predict('llllv_354460', board).then((result) => {
+
+								modelLoader.current?.trainModel('llllv_354460', gameBoard.current, i * 3 + j, 1).then(() => {
+									console.log('model trained by player move!');
+								});
+
+								console.log(result);
+								if (result != undefined) {
+									const aiRow = Math.floor(result / 3);
+									const aiCol = result % 3;
+	
+									// AI 턴 반영 gameBoard 업데이트
+									gameBoard.current[aiRow][aiCol] = -1;
+	
+									// 사각형 안에 표시
+									const aiText = this.add.text(300 + aiCol * 100 + 50, 200 + aiRow * 100 + 50, 'O', { color: '#fafafa', fontFamily: 'ArmWrestler', fontSize: '32px', });
+									aiText.setOrigin(0.5);
+	
+									this.tweens.add({
+										targets: aiText,
+										scale: { from: 1, to: 1.2 },
+										duration: 100,
+										yoyo: true,
+										ease: 'Power1'
+									});
+								}
+
+							});
+
+						});
+
+						// 생성 시점에서 gameBoard 반영
+						if (gameBoard.current[i][j] === 1) {
+							const text = this.add.text(300 + j * 100 + 50, 200 + i * 100 + 50, 'X', { color: '#fafafa', fontFamily: 'ArmWrestler', fontSize: '32px', });
+							text.setOrigin(0.5);
+						}
+					}
+				}
+
+			},
+			update() {},
+		}
+	};
 
 
 	const [modalOpenWhatIsThis, setModalOpenWhatIsThis] = useState(false);
@@ -80,6 +229,19 @@ export default function GameStartScreen() {
 			audioLoader.current?.stop('main_bgm');
 			setGameStatusPaused(false);
 			console.log("game bgm stop!");
+
+
+			//게임 초기화
+			if (game.current) {
+				game.current.destroy(true);
+				game.current = null;
+			}
+
+			//게임 시작
+			if (!game.current) game.current = new Game(phaserConfig);
+
+			initializeGame();
+
 		}
 
 		if (sceneName === 'main') {
@@ -112,6 +274,7 @@ export default function GameStartScreen() {
 				await imageLoader.current.loadImage(asset.key, asset.path);
 				setLoadCount((prev) => prev + 1);
 			}
+
 
 
 		}
@@ -211,67 +374,55 @@ export default function GameStartScreen() {
 							<MonitorComponent>
 								<div className="flex justify-between w-full h-full z-[2]">
 
-									{gameStatusPaused && (
-										<div className="flex flex-col w-full">
+							
+									<div className={`flex flex-col w-full ${!gameStatusPaused && 'hidden'}`}>
 
-											<div className="flex justify-end">
-											</div>
-
-											<div className="flex flex-col items-center justify-center w-full h-full space-y-6 p-10">
-												<motion.div
-													className="text-[40px] font-bold text-yellow-500 "
-													animate={{ opacity: [1, 0.5, 1], scale: [1, 1.2, 1] }}
-													transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-												>
-													PAUSED
-												</motion.div>
-
-												<button onClick={() => setGameStatusPaused(false)} className="px-6 py-3 text-white bg-green-600 rounded-lg text-[18px] font-semibold shadow-md hover:bg-green-700 transition duration-300 ease-in-out">
-													Continue
-												</button>
-												<button onClick={() => gotoScene('main')} className="px-6 py-3 text-white bg-red-600 rounded-lg text-[18px] font-semibold shadow-md hover:bg-red-700 transition duration-300 ease-in-out">
-													Quit
-												</button>
-											</div>
-
+										<div className="flex justify-end">
 										</div>
-									)}
 
-									{!gameStatusPaused && (
-										<div className="flex flex-col w-full">
+										<div className="flex flex-col items-center justify-center w-full h-full space-y-6 p-10">
+											<motion.div
+												className="text-[40px] font-bold text-yellow-500 "
+												animate={{ opacity: [1, 0.5, 1], scale: [1, 1.2, 1] }}
+												transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+											>
+												PAUSED
+											</motion.div>
 
-											<div className="flex justify-end">
-												<button className="px-4 py-2 mt-[10px] mr-[10px] font-bold text-[18px] text-white hover:underline transition duration-300" onClick={() => setGameStatusPaused(true)}>
-													Pause
-												</button>
-											</div>
-											<div className="flex flex-col items-center justify-center w-full h-full space-y-6 p-10">
-
-												<div onClick={() => {
-													modelLoader.current?.predict('lv4', [
-														0, 0, -1, 
-														0, 1, 0, 
-														0, 0, 0
-													]).then((result) => {
-														console.log(result);
-													});
-												}}>predict test</div>
-
-												<div className="grid grid-cols-3 gap-2 w-[300px] h-[300px] z-[1]">
-													{Array.from({ length: 9 }).map((_, index) => (
-														<div
-															key={index}
-															className="flex items-center justify-center w-full h-full border border-gray-500 text-2xl font-bold text-white"
-														>
-															{/* Add your cell content here */}
-															X/O
-														</div>
-													))}
-												</div>
-
-											</div>
+											<button onClick={() => setGameStatusPaused(false)} className="px-6 py-3 text-white bg-green-600 rounded-lg text-[18px] font-semibold shadow-md hover:bg-green-700 transition duration-300 ease-in-out">
+												Continue
+											</button>
+											<button onClick={() => gotoScene('main')} className="px-6 py-3 text-white bg-red-600 rounded-lg text-[18px] font-semibold shadow-md hover:bg-red-700 transition duration-300 ease-in-out">
+												Quit
+											</button>
 										</div>
-									)}
+
+									</div>
+							
+
+				
+									<div className={`flex flex-col w-full ${gameStatusPaused && 'hidden'}`}>
+
+										{/* <div className="flex justify-end">
+											<button className="px-4 py-2 mt-[10px] mr-[10px] font-bold text-[18px] text-white hover:underline transition duration-300" onClick={() => setGameStatusPaused(true)}>
+												Pause
+											</button>
+										</div> */}
+										<div className="" id="phaser-game-container">
+
+											{/* <div onClick={() => {
+												const board = [
+													[0, 0, 0],
+													[0, 0, 0],
+													[0, 0, 0]
+												];
+												modelLoader.current?.predict('llllv_79156', board).then((result) => {
+													console.log(result);
+												});
+											}}>predict test</div> */}
+										</div>
+									</div>
+				
 
 
 								</div>

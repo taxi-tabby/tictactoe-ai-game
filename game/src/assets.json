@@ -2,12 +2,20 @@
 
     "aimodel": [
         {
-            "key": "lv4",
-            "path": "./game/asset/aimodel/lv4_web/model.json"
+            "key": "lv25284",
+            "path": "./game/asset/aimodel/lv25284_web/model.json"
         },
         {
-            "key": "lv5",
-            "path": "./game/asset/aimodel/lv5_web/model.json"
+            "key": "lv134258",
+            "path": "./game/asset/aimodel/lv134258_web/model.json"
+        },
+        {
+            "key": "llllv_79156",
+            "path": "./game/asset/aimodel/llllv_79156_web/model.json"
+        },
+        {
+            "key": "llllv_354460",
+            "path": "./game/asset/aimodel/llllv_354460_web/model.json"
         }
     ],
 
