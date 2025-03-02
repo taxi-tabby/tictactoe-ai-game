@@ -12,6 +12,9 @@ import * as Dialog from "@radix-ui/react-dialog";
 import assetLoadingAnimation from './assetLoad.json';
 import MonitorComponent from "../component/monitorComponent";
 import { AudioPlayer, AudioManager } from "../../classes/audio";
+import { TicTacToeAI } from "../../classes/model";
+
+
 import { ImageLoader } from "../../classes/image";
 
 import assetList from '../../assets.json';
@@ -43,6 +46,8 @@ export default function GameStartScreen() {
 
 	const audioLoader = useRef<AudioManager | null>(null);
 	const imageLoader = useRef<ImageLoader | null>(null);
+	const modelLoader = useRef<TicTacToeAI | null>(null);
+
 
 	const [modalOpenWhatIsThis, setModalOpenWhatIsThis] = useState(false);
 	const [modalOpenLicense, setModalOpenLicense] = useState(false);
@@ -91,17 +96,23 @@ export default function GameStartScreen() {
 			//관리자 생성
 			if (!audioLoader.current) audioLoader.current = new AudioManager();
 			if (!imageLoader.current) imageLoader.current = new ImageLoader();
+			if (!modelLoader.current) modelLoader.current = new TicTacToeAI();
 
-			setTotalLCount(assetList.images.length + assetList.audio.length);
+			setTotalLCount(assetList.images.length + assetList.audio.length + assetList.aimodel.length);
 
-			for (const asset of assetList.images) {
-				await imageLoader.current.loadImage(asset.key, asset.path);
+			for (const asset of assetList.aimodel) {
+				await modelLoader.current.addModel(asset.key, asset.path);
 				setLoadCount((prev) => prev + 1);
 			}
 			for (const asset of assetList.audio) {
 				await audioLoader.current.addAudio(asset.key, asset.path, { loop: asset.loop ?? false, volume: asset.volume ?? 1.0 });
 				setLoadCount((prev) => prev + 1);
 			}
+			for (const asset of assetList.images) {
+				await imageLoader.current.loadImage(asset.key, asset.path);
+				setLoadCount((prev) => prev + 1);
+			}
+
 
 		}
 
@@ -178,7 +189,7 @@ export default function GameStartScreen() {
 													animate={{ opacity: 1 }}
 													transition={{ duration: 0.5, ease: "easeInOut" }}
 												>
-													{loadCount} / {totalLoadCount}
+													{((loadCount / totalLoadCount) * 100).toFixed(2)}%
 												</motion.div>
 											</>
 										)
@@ -225,6 +236,7 @@ export default function GameStartScreen() {
 
 										</div>
 									)}
+
 									{!gameStatusPaused && (
 										<div className="flex flex-col w-full">
 
@@ -234,6 +246,16 @@ export default function GameStartScreen() {
 												</button>
 											</div>
 											<div className="flex flex-col items-center justify-center w-full h-full space-y-6 p-10">
+
+												<div onClick={() => {
+													modelLoader.current?.predict('lv4', [
+														0, 0, -1, 
+														0, 1, 0, 
+														0, 0, 0
+													]).then((result) => {
+														console.log(result);
+													});
+												}}>predict test</div>
 
 												<div className="grid grid-cols-3 gap-2 w-[300px] h-[300px] z-[1]">
 													{Array.from({ length: 9 }).map((_, index) => (
@@ -477,11 +499,13 @@ export default function GameStartScreen() {
 
 									<div className="flex flex-col items-center justify-end h-full">
 										<motion.div
-											className="flex items-end justify-center h-full"
-											animate={{ y: [0, -50, 0] }}
+											className="flex items-end justify-center h-full mr-4"
+											animate={{ y: [0, -20, 0] }}
 											transition={{ duration: 0.8, repeat: Infinity, ease: [0.445, 0.05, 0.55, 0.95] }} // easeInOutSine equivalent
 										>
-											<img src="./game/asset/image/cat(main).png_짜치니까_이거_쓰지말자ㅋㅋ" alt="아직 정해지지 않음" title="아직 정해지지 않음" className="" />
+											<div className="w-[50px] h-[50px] bg-white rounded-full flex items-center justify-center p-4 shadow-lg mb-2 cursor-pointer" onClick={() => { window.open('https://github.com/taxi-tabby/tictactoe-ai-game', '_blank') }}>
+												<img src={imageLoader.current?.getImageAsBase64(`repo_wolf`)} alt="repo" title="repo" className="w-[40px]" />
+											</div>
 										</motion.div>
 									</div>
 

@@ -24,6 +24,7 @@ export class ImageLoader {
                     this.base64Images.set(key, base64);
                 }
 
+                console.info(`Image loaded from ${src}`);
                 resolve();
             };
             img.onerror = () => {

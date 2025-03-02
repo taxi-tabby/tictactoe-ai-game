@@ -39,7 +39,12 @@ class AudioPlayer {
         return new Promise((resolve, reject) => {
             this.audio.src = url;
             this.audio.load();
-            this.audio.addEventListener('canplaythrough', () => resolve(), { once: true });
+            this.audio.addEventListener('canplaythrough', () => {
+                console.info(`Audio loaded from ${url}`);
+                resolve();
+            }, { 
+                once: true 
+            });
             this.audio.addEventListener('error', (e) => reject(e), { once: true });
         });
     }

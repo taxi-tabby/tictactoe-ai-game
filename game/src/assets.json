@@ -1,5 +1,21 @@
 {
+
+    "aimodel": [
+        {
+            "key": "lv4",
+            "path": "./game/asset/aimodel/lv4_web/model.json"
+        },
+        {
+            "key": "lv5",
+            "path": "./game/asset/aimodel/lv5_web/model.json"
+        }
+    ],
+
     "images": [
+        {
+            "key": "repo_wolf",
+            "path": "./game/asset/image/repo_wolf.png"
+        },
         {
             "key": "logo",
             "path": "./game/asset/image/logo(white).png"
