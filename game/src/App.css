@@ -21,6 +21,9 @@
   font-size: 12px;
   text-wrap: nowrap;
 }
+html, body {
+  overflow:hidden;
+}
 img, svg {
   -webkit-user-drag: none;
   -khtml-user-drag: none;
