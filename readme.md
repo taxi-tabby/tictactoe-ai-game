@@ -1,4 +1,4 @@
-# [Tic-Tac-Toe AI Game](https://taxi-tabby.github.io/tictactoe-ai-game/)
+# [Tic-Tac-Toe AI Game (play link)](https://taxi-tabby.github.io/tictactoe-ai-game/)
 
 Still in development.  
 Currently testing features.  
