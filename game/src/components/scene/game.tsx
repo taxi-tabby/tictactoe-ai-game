@@ -63,6 +63,8 @@ export default function GameStartScreen() {
 		[0, 0, 0]
 	]);
 
+	const gameHistory = useRef<{reward: number, move: number, board: number[][] }[]>([]);
+
 	function initializeBoard() {
 		const newBoard = [
 			[0, 0, 0],
@@ -77,32 +79,41 @@ export default function GameStartScreen() {
 		setGameTurn(randomTurn);
 	}
 
+
+
 	function initializeGame() {
 		initializeBoard();
 		chooseRandomTurn();
 	}
 
 	//승리체크
-    function checkWinner() {
-        const winPatterns = [
-            [[0, 0], [0, 1], [0, 2]],
-            [[1, 0], [1, 1], [1, 2]],
-            [[2, 0], [2, 1], [2, 2]],
-            [[0, 0], [1, 0], [2, 0]],
-            [[0, 1], [1, 1], [2, 1]],
-            [[0, 2], [1, 2], [2, 2]],
-            [[0, 0], [1, 1], [2, 2]],
-            [[2, 0], [1, 1], [0, 2]]
-        ];
+	function checkWinner() {
+		const winPatterns = [
+			[[0, 0], [0, 1], [0, 2]],
+			[[1, 0], [1, 1], [1, 2]],
+			[[2, 0], [2, 1], [2, 2]],
+			[[0, 0], [1, 0], [2, 0]],
+			[[0, 1], [1, 1], [2, 1]],
+			[[0, 2], [1, 2], [2, 2]],
+			[[0, 0], [1, 1], [2, 2]],
+			[[2, 0], [1, 1], [0, 2]]
+		];
 
-        for (let pattern of winPatterns) {
-            const [a, b, c] = pattern;
+		for (let pattern of winPatterns) {
+			const [a, b, c] = pattern;
 			if (gameBoard.current[a[0]][a[1]] && gameBoard.current[a[0]][a[1]] === gameBoard.current[b[0]][b[1]] && gameBoard.current[a[0]][a[1]] === gameBoard.current[c[0]][c[1]]) {
 				return gameBoard.current[a[0]][a[1]];
 			}
-        }
-        return null;
-    }
+		}
+
+		// Check for draw
+		const isDraw = gameBoard.current.every(row => row.every(cell => cell !== 0));
+		if (isDraw) {
+			return null;
+		}
+
+		return 0;
+	}
 
 
 	const phaserConfig: Phaser.Types.Core.GameConfig = {
@@ -111,9 +122,7 @@ export default function GameStartScreen() {
 		width: 900,
 		height: 600,
 		type: Phaser.CANVAS,
-		// 배경을 투명하게 설정(디폴트 검정색)
 		transparent: true,
-		// 씬을 관리하는 메소드.
 		scene: {
 			preload() {
 
@@ -134,10 +143,16 @@ export default function GameStartScreen() {
 						rect.setStrokeStyle(2, 0xffffff);
 						rect.setInteractive({ useHandCursor: true });
 						rect.on('pointerdown', () => {
+							if (gameBoard.current[i][j] !== 0) return; // 이미 클릭된 칸은 무시
+
 							console.log(`Square clicked: Row ${i}, Column ${j}`);
 
 							// 클릭 반영 gameBoard 업데이트
 							gameBoard.current[i][j] = 1;
+
+							// 게임 기록 업데이트
+							const reward: number = checkWinner() === 1 ? 1 : 0.0001;
+							gameHistory.current.push({ move: i * 3 + j, board: JSON.parse(JSON.stringify(gameBoard.current)), reward });
 
 							// 사각형 안에 표시
 							const text = this.add.text(300 + j * 100 + 50, 200 + i * 100 + 50, 'X', { color: '#fafafa', fontFamily: 'ArmWrestler', fontSize: '32px', });
@@ -151,36 +166,65 @@ export default function GameStartScreen() {
 								ease: 'Power1'
 							});
 
-							// AI 턴 예측
-							const board = gameBoard.current;
-							modelLoader.current?.predict('llllv_354460', board).then((result) => {
+							const self = this;
 
-								modelLoader.current?.trainModel('llllv_354460', gameBoard.current, i * 3 + j, 1).then(() => {
-									console.log('model trained by player move!');
+							const trainingData = gameHistory.current.map(history => ({
+								boardState: history.board,
+								action: history.move,
+								reward: history.reward,
+							}));
+
+
+							function donecheck() {
+								const winner = checkWinner();
+								if (winner) {
+									console.log(`Player ${winner} wins!`);
+									initializeGame();
+									self.scene.restart(); // 게임 초기화 후 씬 재시작
+								} else if (winner === null) {
+									console.log('Draw!');
+									initializeGame();
+									self.scene.restart(); // 게임 초기화 후 씬 재시작
+								}
+							}
+
+
+							modelLoader.current?.trainModel('llllv_354460', trainingData).then(() => {
+								console.log('model trained by player move!');
+
+								// AI 턴 예측
+								const board = gameBoard.current;
+								modelLoader.current?.predict('llllv_354460', board).then((result) => {
+
+									if (result != undefined) {
+										const aiRow = Math.floor(result / 3);
+										const aiCol = result % 3;
+
+										// AI 턴 반영 gameBoard 업데이트
+										board[aiRow][aiCol] = -1;
+
+										// 사각형 안에 표시
+										const aiText = this.add.text(300 + aiCol * 100 + 50, 200 + aiRow * 100 + 50, 'O', { color: '#fafafa', fontFamily: 'ArmWrestler', fontSize: '32px', });
+										aiText.setOrigin(0.5);
+
+										this.tweens.add({
+											targets: aiText,
+											scale: { from: 1, to: 1.2 },
+											duration: 100,
+											yoyo: true,
+											ease: 'Power1'
+										});
+										donecheck();
+									}
+
 								});
 
-								console.log(result);
-								if (result != undefined) {
-									const aiRow = Math.floor(result / 3);
-									const aiCol = result % 3;
-	
-									// AI 턴 반영 gameBoard 업데이트
-									gameBoard.current[aiRow][aiCol] = -1;
-	
-									// 사각형 안에 표시
-									const aiText = this.add.text(300 + aiCol * 100 + 50, 200 + aiRow * 100 + 50, 'O', { color: '#fafafa', fontFamily: 'ArmWrestler', fontSize: '32px', });
-									aiText.setOrigin(0.5);
-	
-									this.tweens.add({
-										targets: aiText,
-										scale: { from: 1, to: 1.2 },
-										duration: 100,
-										yoyo: true,
-										ease: 'Power1'
-									});
-								}
 
 							});
+
+
+							//ㅌㅌㅌㅌㅌㅌ
+							donecheck();
 
 						});
 
@@ -188,12 +232,15 @@ export default function GameStartScreen() {
 						if (gameBoard.current[i][j] === 1) {
 							const text = this.add.text(300 + j * 100 + 50, 200 + i * 100 + 50, 'X', { color: '#fafafa', fontFamily: 'ArmWrestler', fontSize: '32px', });
 							text.setOrigin(0.5);
+						} else if (gameBoard.current[i][j] === -1) {
+							const text = this.add.text(300 + j * 100 + 50, 200 + i * 100 + 50, 'O', { color: '#fafafa', fontFamily: 'ArmWrestler', fontSize: '32px', });
+							text.setOrigin(0.5);
 						}
 					}
 				}
 
 			},
-			update() {},
+			update() { },
 		}
 	};
 
@@ -374,7 +421,7 @@ export default function GameStartScreen() {
 							<MonitorComponent>
 								<div className="flex justify-between w-full h-full z-[2]">
 
-							
+
 									<div className={`flex flex-col w-full ${!gameStatusPaused && 'hidden'}`}>
 
 										<div className="flex justify-end">
@@ -398,9 +445,9 @@ export default function GameStartScreen() {
 										</div>
 
 									</div>
-							
 
-				
+
+
 									<div className={`flex flex-col w-full ${gameStatusPaused && 'hidden'}`}>
 
 										{/* <div className="flex justify-end">
@@ -422,7 +469,7 @@ export default function GameStartScreen() {
 											}}>predict test</div> */}
 										</div>
 									</div>
-				
+
 
 
 								</div>

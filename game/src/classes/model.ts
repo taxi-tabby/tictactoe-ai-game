@@ -112,32 +112,55 @@ export class TicTacToeAI {
         return predictedMove;
     }
     
-    public async trainModel(key: string, boardState: number[][], action: number, reward: number): Promise<void> {
+    public async trainModel(key: string, trainingData: { boardState: number[][], action: number, reward: number }[]): Promise<void> {
         const model = this.models.get(key);
         if (!model) {
             throw new Error(`Model with key ${key} not found`);
         }
-    
-        // boardState를 1D 배열로 변환 (3x3 board -> 1D)
-        const flatBoardState = boardState.flat();  // [1, 0, -1, 0, 1, 0, -1, 0, 1]
-    
-        // 1D 배열을 4D 텐서로 변환
-        const input = tf.tensor4d(flatBoardState, [1, 3, 3, 1]);  // [1, 3, 3, 1] 형태로 텐서 생성
-    
-        // 현재 상태에서의 예측값
-        const prediction = model.predict(input) as tf.Tensor;
-        const qValues = await prediction.data();
-    
-        // Q-러닝 업데이트
-        qValues[action] = reward;
-    
+
+        const inputs: number[][][] = [];
+        const targets: number[][] = [];
+
+        for (const data of trainingData) {
+            const { boardState, action, reward } = data;
+
+            console.log(boardState, action, reward);
+
+            // boardState를 1D 배열로 변환 (3x3 board -> 1D)
+            const flatBoardState = boardState.flat();  // [1, 0, -1, 0, 1, 0, -1, 0, 1]
+            inputs.push([flatBoardState]);
+
+            // 현재 상태에서의 예측값
+            const inputTensor = tf.tensor4d(flatBoardState, [1, 3, 3, 1]);
+            const prediction = model.predict(inputTensor) as tf.Tensor;
+            const qValues = await prediction.data();
+
+            // Q-러닝 업데이트
+            qValues[action] = reward;
+            targets.push(Array.from(qValues));
+
+            inputTensor.dispose();
+        }
+
         // 업데이트된 Q-값으로 모델 훈련
-        const updatedQValues = tf.tensor2d(qValues, [1, qValues.length]);
+        const flattenedInputs = inputs.map(board => board.flat(2));
+        const inputTensor = tf.tensor4d(flattenedInputs.flat(), [inputs.length, 3, 3, 1]);
+        const targetTensor = tf.tensor2d(targets);
         model.compile({ optimizer: 'adam', loss: 'meanSquaredError' });
-        await model.fit(input, updatedQValues);
-    
-        input.dispose();
-        updatedQValues.dispose();
+        await model.fit(inputTensor, targetTensor, {
+            epochs: trainingData.length,
+            shuffle: true,
+            callbacks: {
+            onEpochEnd: (epoch, logs) => {
+                if (logs) {
+                    console.log(`Epoch ${epoch}: loss = ${logs.loss}`);
+                }
+            }
+            }
+        });
+
+        inputTensor.dispose();
+        targetTensor.dispose();
     }
 
 }
