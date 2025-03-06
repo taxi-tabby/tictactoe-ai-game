@@ -11,11 +11,11 @@ import * as Dialog from "@radix-ui/react-dialog";
 
 import assetLoadingAnimation from './assetLoad.json';
 import MonitorComponent from "../component/monitorComponent";
-import { AudioPlayer, AudioManager } from "../../classes/audio";
-import { TicTacToeAI } from "../../classes/model";
+import { AudioPlayer, AudioManager } from "../../schema/classes/audio";
+import { TicTacToeAI } from "../../schema/classes/model";
 
 
-import { ImageLoader } from "../../classes/image";
+import { ImageLoader } from "../../schema/classes/image";
 
 import assetList from '../../assets.json';
 
