@@ -6,7 +6,7 @@ import VariableGetSet from "../getset";
 /**
  * 틱텍토 게임 상태
  */
-enum TictactoeGameStatus {
+export enum TictactoeGameStatus {
     PLAYING,
     DRAW,
     PAUSE
@@ -66,22 +66,32 @@ class tictactoeGameBehavior extends BoardGame {
             return {moved: false, reason: 'Player not selected'}; // 현재 플레이어가 없는 경우
         }
 
-        //입력
-        this.board.value[row][col] = currentPlayer;
-        this.addBoardHistoryItem({
-            row: row,
-            col: col,
-            currentPlayer: currentPlayer,
-            whichTile: currentPlayer, // 플레이어 타일과 플레이어가 보드에 둔 타일의 정의가 동일함.
-            board: this.deepCopy(this.board.value),
-        });
+        
+        const checkBefore = this.checkWinner();
+
+
+        //타입 입력 (게임 진행의 경우에만 입력)
+        if (checkBefore.type === 'status' && checkBefore.value === TictactoeGameStatus.PLAYING) {
+
+            this.board.value[row][col] = currentPlayer;
+            this.addBoardHistoryItem({
+                row: row,
+                col: col,
+                currentPlayer: currentPlayer,
+                whichTile: currentPlayer, // 플레이어 타일과 플레이어가 보드에 둔 타일의 정의가 동일함.
+                board: this.deepCopy(this.board.value),
+            });
+
+        }
+
+
 
         
 
-        const check = this.checkWinner();
+        const checkAfter = this.checkWinner();
 
-        if (check.type === 'status') {
-            switch (check.value) {
+        if (checkAfter.type === 'status') {
+            switch (checkAfter.value) {
                 case TictactoeGameStatus.DRAW:
                     this.addGlobalBoardHistoryItem({
                         winner: this.tile('EMPTY'),
@@ -91,17 +101,17 @@ class tictactoeGameBehavior extends BoardGame {
                     return {moved: true, reason: 'Draw'};
             }
         } else {
-            switch (check.value) {
+            switch (checkAfter.value) {
                 case this.tile('X'):
                     this.addGlobalBoardHistoryItem({
-                        winner: check.value,
+                        winner: checkAfter.value,
                         histroy: this.deepCopy(this.boardHistory.value),
                     });
                     this.resetBoardHistory();
                     return {moved: true, reason: 'Player X wins'};
                 case this.tile('O'):
                     this.addGlobalBoardHistoryItem({
-                        winner: check.value,
+                        winner: checkAfter.value,
                         histroy: this.deepCopy(this.boardHistory.value),
                     });
                     this.resetBoardHistory();
