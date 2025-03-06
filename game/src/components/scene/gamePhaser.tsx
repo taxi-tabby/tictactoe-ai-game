@@ -6,7 +6,14 @@ import { tictactoeExtendsSpecialRules } from '../../schema/classes/tictactoeExte
 import Phaser, { Game } from "phaser";
 import { motion } from 'framer-motion';
 import MonitorComponent from '../component/monitorComponent';
-import { clear } from 'console';
+
+import { EmptyScene } from './phaser/scene/empty';
+import { MainScene } from './phaser/scene/main';
+import { GameScene } from './phaser/scene/game';
+
+
+
+
 interface LoadingSceneComponentProps {
     audioLoader: React.RefObject<AudioManager | null>;
     imageLoader: React.RefObject<ImageLoader | null>;
@@ -19,40 +26,27 @@ export default function PhaserSceneComponent({
     modelLoader
 }: LoadingSceneComponentProps) {
 
-    console.log(audioLoader);
-    console.log(imageLoader);
-    console.log(modelLoader);
+    // console.log(audioLoader);
+    // console.log(imageLoader);
+    // console.log(modelLoader);
 
 
     //phaser game instance!
     const game = useRef<Game | null>(null);
-    const gameBehavior = useRef<tictactoeExtendsSpecialRules | null>(null);
+    // const gameBehavior = useRef<tictactoeExtendsSpecialRules | null>(null);
 
     const phaserConfig: Phaser.Types.Core.GameConfig = {
-
         parent: 'phaser-game-container',
         width: 900,
         height: 600,
         type: Phaser.CANVAS,
         transparent: true,
-        scene: {
-            preload() {
-
-            },
-            create() {
-
-            },
-            update() { },
-        }
+        scene: [EmptyScene, MainScene, GameScene],
+        
     };
 
-    function showGameConfigToConsole(self: tictactoeExtendsSpecialRules) {
-        console.log("Board Configuration:", self.getBoard());
-        console.log("Controller:", self.getController());
-        console.log("Current Player:", self.getCurrentPlayer());
-        console.log("Board Size:", self.mapSizeX.value, 'x' ,self.mapSizeY.value);
-    }
 
+    //초기화
     useEffect(() => {
 
         //게임 초기화
@@ -63,51 +57,65 @@ export default function PhaserSceneComponent({
 
         //게임 시작
         if (!game.current) {
-            game.current = new Game(phaserConfig);
-            gameBehavior.current = new tictactoeExtendsSpecialRules();
+
+
+            game.current = new Game({
+                ...phaserConfig,
+            });
+            game.current.scene.start('GameScene');
+            game.current.registry.set('audioLoader', audioLoader.current);
+            game.current.registry.set('imageLoader', imageLoader.current);
+            game.current.registry.set('modelLoader', modelLoader.current);
+
+
+
         }
 
 
+        // audioLoader.current?.play('ingame_bgm');//for test
 
-        audioLoader.current?.play('ingame_bgm');//for test
-
-        const testimer= setInterval(() => {
-            console.log('freq', audioLoader.current?.getWaveformData('ingame_bgm'));
+        // const testimer= setInterval(() => {
+        //     console.log('freq', audioLoader.current?.getWaveformData('ingame_bgm'));
             
-        }, 1000);
+        // }, 1000);
 
-        gameBehavior.current?.gameStart((self) => {
-            //플레이어 용도 랜덤 타일을 하나를 선택
-            const whoIsYou = self.randomPlayerSelect();
 
-            //누가 먼저 할 것인가 선택
-            const whoPlayFirst = self.randomPlayerSelect();
+        // game.current.config as Phaser.Types.Core.tictactoePhaserGameConfig;
+        // game.current?.gameStart((self) => {
+        //     //플레이어 용도 랜덤 타일을 하나를 선택
+        //     const whoIsYou = self.randomPlayerSelect();
 
-            //그 타일을 플레이어(컨트롤 가능한 대상) 로 설정함
-            self.setController(whoIsYou);
+        //     //누가 먼저 할 것인가 선택
+        //     const whoPlayFirst = self.randomPlayerSelect();
 
-            //게임 시작 시 누가 먼저 할 것인가
-            self.setCurrentPlayer(whoPlayFirst);
+        //     //그 타일을 플레이어(컨트롤 가능한 대상) 로 설정함
+        //     self.setController(whoIsYou);
 
-            //게임 보드 초기는 3x3으로 시작
-            self.setBoardSize(3, 3);
+        //     //게임 시작 시 누가 먼저 할 것인가
+        //     self.setCurrentPlayer(whoPlayFirst);
 
-            //출력ㅌxxx
-            showGameConfigToConsole(self);
-        });
+        //     //게임 보드 초기는 3x3으로 시작
+        //     self.setBoardSize(3, 3);
 
+        //     //출력ㅌxxx
+        //     showGameConfigToConsole(self);
+        // });
+
+
+
+        //초기화 회수
         return () => {
 
-            audioLoader.current?.stop('ingame_bgm');//for test
+            // audioLoader.current?.stop('ingame_bgm');//for test
 
-            clearInterval(testimer);
+            // clearInterval(testimer);
 
             game.current?.destroy(true);
             game.current = null;
 
-            if (gameBehavior.current) {
-                gameBehavior.current = null;
-            }
+            // if (gameBehavior.current) {
+            //     gameBehavior.current = null;
+            // }
         }
 
 
