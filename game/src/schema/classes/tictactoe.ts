@@ -26,22 +26,31 @@ class tictactoeGameBehavior extends BoardGame {
         // this.setBoardSize(3, 3);
 
         //플레이어 타일
-        this.addTile('O', 1); //플레이어
-        this.addTile('X', 2); //플레이어
+        this.addTile('O', 1); //플레이어1
+        this.addTile('X', 2); //플레이어2
 
-        // //상태
-        // this.addTile('STATUS_PLAYING', 5000); //게임 중
-        // this.addTile('STATUS_DRAW', 5001); //게임 중
+        //조작 대상
+        this.whoAreYou = new VariableGetSet<TileValue | undefined>(undefined);
+
     }
 
     whoNext(): TileValue {
         let next: TileValue = this.tile('EMPTY');
-        if (this.currentPlayer === this.tile('X')) {
+        if (this.currentPlayer.value === this.tile('X')) {
             next = this.tile('O');
-        } else if (this.currentPlayer === this.tile('O')) {
+        } else if (this.currentPlayer.value === this.tile('O')) {
             next = this.tile('X');
         }
         return next;
+    }
+
+
+    setCurrentPlayer(player: TileValue): void {
+        if (player === BoardGame.Tile.X || player === BoardGame.Tile.O || player === BoardGame.Tile.EMPTY) {
+            this.currentPlayer.value = player;
+        } else {
+            throw new Error("Invalid player value");
+        }
     }
 
     makeMove(row: number, col: number): boardActionDenied {
@@ -200,8 +209,38 @@ class tictactoeGameBehavior extends BoardGame {
         }
     }
 
+
+    /**
+     * 해당 화면에서 당신이 조작하는 타일이 무엇인지 확인
+     */
+    private whoAreYou: VariableGetSet<TileValue | undefined>;
+
+
+    /**
+     * 조종자를 선택하는 메서드
+     * @param controller 조종자 타일 값
+     */
+    setController(controller: TileValue | undefined): void {
+        if (controller === this.tile('X') || controller === this.tile('O') || controller === undefined) {
+            this.whoAreYou.value = controller;
+        } else {
+            throw new Error("Invalid controller value");
+        }
+    }
+
+    /**
+     * 현재 조종자가 누구인지 확인하는 메서드
+     * @returns 조종자 타일 값
+     */
+    getController(): TileValue | undefined {
+        return this.whoAreYou.value;
+    }
+
+
+
     /**
      * 50% 확률로 플레이어를 선택
+     * - 주의 직접 스위치를 해야 함
      * @returns 
      */
     randomPlayerSelect(): TileValue {
@@ -213,7 +252,19 @@ class tictactoeGameBehavior extends BoardGame {
      * 게임 시작
      */
     gameStart(): void {
-        this.setPlayer(this.randomPlayerSelect());
+
+        //플레이어 용도 랜덤 타일을 하나를 선택
+        const whoIsYou = this.randomPlayerSelect();
+
+        //누가 먼저 할 것인가 선택
+        const whoPlayFirst = this.randomPlayerSelect();
+
+        //그 타일을 플레이어(컨트롤 가능한 대상) 로 설정함
+        this.setController(whoIsYou);
+
+        //게임 시작 시 누가 먼저 할 것인가
+        this.setCurrentPlayer(whoPlayFirst);
+
     }
 
 

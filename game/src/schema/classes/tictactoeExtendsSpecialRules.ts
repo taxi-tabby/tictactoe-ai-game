@@ -100,8 +100,14 @@ class tictactoeExtendsSpecialRules extends tictactoeGameBehavior {
      * @param callbackProgress 
      * @param callbackDone 
      */
-    calcScoreAITurnWin(callbackProgress: Function, callbackDone: Function): void {
+    calcScoreAITurnWin(callbackProgress: (aiCanBeWinner: boolean) => void, callbackDone: () => void): void {
+        for (let index = 0; index < this.globalBoardHistory.value.length; index++) {
+            const board = this.globalBoardHistory.value[index];
+            // if (board.winner )
+            callbackProgress(false);
+        }
 
+        callbackDone();
     }
 
 

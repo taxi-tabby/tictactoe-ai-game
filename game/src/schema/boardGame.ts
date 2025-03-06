@@ -33,7 +33,7 @@ type boardActionDenied = {moved: boolean, reason?: string};
 abstract class BoardGame {
 
     public static Tile: Record<string, number | string> = {
-        EMPTY: 0,
+        EMPTY: 0, //예약 된 놈
     };
 
     static addTile(name: string, value: string | number): void {
@@ -46,7 +46,7 @@ abstract class BoardGame {
     /**
      * @description currentPlayer 현재 플레이어
      */
-    protected currentPlayer: TileValue;
+    protected currentPlayer: VariableGetSet<TileValue>;
 
     /**
      * @description board 게임 보드
@@ -73,7 +73,7 @@ abstract class BoardGame {
         this.board = new VariableGetSet(Array.from({ length: rows }, () => Array(cols).fill(BoardGame.Tile.EMPTY)));
         this.globalBoardHistory = new VariableGetSet([]);
         this.boardHistory = new VariableGetSet([]);
-        this.currentPlayer = BoardGame.Tile.EMPTY; // 초기에는 플레이어가 설정되지 않음
+        this.currentPlayer = new VariableGetSet<TileValue>(BoardGame.Tile.EMPTY); // 초기에는 플레이어가 설정되지 않음
     }
 
 
@@ -134,7 +134,7 @@ abstract class BoardGame {
      */
     switchPlayer(player: TileValue): void {
         if (Object.values(BoardGame.Tile).includes(player)) {
-            this.currentPlayer = player;
+            this.currentPlayer.value = player;
         } else {
             throw new Error("Invalid player value");
         }
@@ -145,21 +145,25 @@ abstract class BoardGame {
     }
 
     getCurrentPlayer(): TileValue {
-        return this.currentPlayer;
+        return this.currentPlayer.value;
     }
 
-    setPlayer(player: TileValue): void {
-        if (player === BoardGame.Tile.X || player === BoardGame.Tile.O || player === BoardGame.Tile.EMPTY) {
-            this.currentPlayer = player;
-        } else {
-            throw new Error("Invalid player value");
-        }
-    }
+    /**
+     * 플레이어 설정
+     * @param player 플레이어
+     */
+    abstract setCurrentPlayer(player: TileValue): void;
 
+    
     /**
      * 타일 값 가져오기
      * @param key 타일 키
      * @returns 타일 값
+     * 
+     * ```
+     * 예약어 목록
+     * EMPTY = 0 
+     * ```
      */
     tile<K extends keyof typeof BoardGame.Tile>(key: K): typeof BoardGame.Tile[K] {
         return BoardGame.Tile[key];
