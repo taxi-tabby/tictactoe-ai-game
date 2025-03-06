@@ -1,5 +1,5 @@
 import './App.css';
-import GameSceneComponent from './components/scene/game';
+import GameSceneComponent from './components/main/game';
 
 function App() {
 	return (

@@ -251,19 +251,11 @@ class tictactoeGameBehavior extends BoardGame {
     /**
      * 게임 시작
      */
-    gameStart(): void {
+    gameStart(starter: (self: this) => void): void {
 
-        //플레이어 용도 랜덤 타일을 하나를 선택
-        const whoIsYou = this.randomPlayerSelect();
 
-        //누가 먼저 할 것인가 선택
-        const whoPlayFirst = this.randomPlayerSelect();
 
-        //그 타일을 플레이어(컨트롤 가능한 대상) 로 설정함
-        this.setController(whoIsYou);
-
-        //게임 시작 시 누가 먼저 할 것인가
-        this.setCurrentPlayer(whoPlayFirst);
+        starter(this);
 
     }
 
