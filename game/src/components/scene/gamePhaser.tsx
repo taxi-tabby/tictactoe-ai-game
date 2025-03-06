@@ -39,9 +39,12 @@ export default function PhaserSceneComponent({
         parent: 'phaser-game-container',
         width: 900,
         height: 600,
-        type: Phaser.CANVAS,
-        transparent: true,
+        type: Phaser.AUTO,
+        transparent: false,
         scene: [EmptyScene, MainScene, GameScene],
+        banner: false,
+        title: 'TicTacToe with ai by taxi_tabby',
+        backgroundColor: '#fafafa',
         
     };
 
