@@ -32,10 +32,24 @@ type boardActionDenied = {moved: boolean, reason?: string};
  */
 abstract class BoardGame {
 
-    public static Tile: Record<string, number | string> = {
-        EMPTY: 0, //예약 된 놈
-    };
+    public static Tile: Record<string, number | string> = {};
 
+    /**
+     * 타일 초기화
+     * - 생성자에서 이미 하고있기 하지만 만약의 경우로 밖으로 빼둠
+     * - 누적이 되는 경우 강제로 class 단위로 저장되는 static 변수는 초기화가 안되기 때문제 수동 제어가 필요함. (react 같은 페이지 랜더링 단위 반응형이 필요한 곳에서 사용) 
+     */
+    static initializeTiles(): void {
+        BoardGame.Tile = {
+            EMPTY: 0, // 예약 된 놈
+        };
+    }
+
+    /**
+     * 타일 추가
+     * @param name 타일 이름
+     * @param value 타일 값
+     */
     static addTile(name: string, value: string | number): void {
         if (name in BoardGame.Tile) {
             throw new Error(`Tile ${name} already exists`);
@@ -70,6 +84,7 @@ abstract class BoardGame {
 
 
     constructor(rows: number, cols: number) {
+        BoardGame.initializeTiles();
         this.board = new VariableGetSet(Array.from({ length: rows }, () => Array(cols).fill(BoardGame.Tile.EMPTY)));
         this.globalBoardHistory = new VariableGetSet([]);
         this.boardHistory = new VariableGetSet([]);
@@ -165,7 +180,7 @@ abstract class BoardGame {
      * EMPTY = 0 
      * ```
      */
-    tile<K extends keyof typeof BoardGame.Tile>(key: K): typeof BoardGame.Tile[K] {
+    protected tile<K extends keyof typeof BoardGame.Tile>(key: K): typeof BoardGame.Tile[K] {
         return BoardGame.Tile[key];
     }
 
@@ -174,7 +189,7 @@ abstract class BoardGame {
      * @param name 타일 이름
      * @param value 타일 값
      */
-    addTile(name: string, value: number): void {
+    protected addTile(name: string, value: number): void {
         if (name in BoardGame.Tile) {
             throw new Error(`Tile ${name} already exists`);
         }
@@ -186,7 +201,7 @@ abstract class BoardGame {
      * @param rows 새로운 보드 행 수
      * @param cols 새로운 보드 열 수
      */
-    setBoardSize(rows: number, cols: number): void {
+    protected setBoardSize(rows: number, cols: number): void {
         this.board.value = (Array.from({ length: rows }, () => Array(cols).fill(BoardGame.Tile.EMPTY)));
     }
 
@@ -195,7 +210,7 @@ abstract class BoardGame {
      * @param obj 복사할 객체
      * @returns 복사된 객체
      */
-    deepCopy<T>(obj: T): T {
+    protected deepCopy<T>(obj: T): T {
         return JSON.parse(JSON.stringify(obj));
     }
 

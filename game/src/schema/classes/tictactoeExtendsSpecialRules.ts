@@ -64,7 +64,7 @@ class tictactoeExtendsSpecialRules extends tictactoeGameBehavior {
         this.mapSizeX = new VariableGetSet(0);
         this.mapSizeY = new VariableGetSet(0);
         this.score = new VariableGetSet(0);
-        this.initalizeGame();
+        this.initalizeGame(); //해당 확장에서 실행행
     }
 
     /**
@@ -82,6 +82,11 @@ class tictactoeExtendsSpecialRules extends tictactoeGameBehavior {
         this.score.value = 0;
     }
 
+    setBoardSize(rows: number, cols: number): void {
+        this.mapSizeX.value = rows;
+        this.mapSizeY.value = cols;
+        super.setBoardSize(rows, cols); //상위 클레스에서 실행
+    }
 
     /**
      * 단순 점수 계산
