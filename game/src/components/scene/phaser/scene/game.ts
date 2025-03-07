@@ -4,6 +4,8 @@ import { TicTacToeAI } from '../../../../schema/classes/model';
 import { AudioManager } from '../../../../schema/classes/audio';
 import { ImageLoader } from '../../../../schema/classes/image';
 import { createTextButton } from "../helper/create/textButton";
+import { createButton } from "../helper/create/button";
+import createLayerContainer from "../helper/create/layerContainer";
 
 export class GameScene extends Phaser.Scene {
 
@@ -55,7 +57,17 @@ export class GameScene extends Phaser.Scene {
 
         this.load.image('particle', imageLoader.getImageAsBase64('repo_wolf'));
         this.load.image('main_bg_1', imageLoader.getImageAsBase64('main_bg_1'));
+        this.load.aseprite('test_sprite', imageLoader.getImageAsBase64('test_sprite'), imageLoader.getFetchedDataURL('test_sprite'));
         
+        const font = new FontFace('SilverFont', 'url(./game/asset/itch/font/Silver.ttf)');
+        font.load().then(function (loadedFont) {
+            document.fonts.add(loadedFont); // 폰트를 웹 폰트로 추가
+            console.log('폰트 로드 완료!');
+        }).catch(function (error) {
+            console.error('폰트 로딩 실패:', error);
+        });
+
+
     }
 
     create() {
@@ -105,10 +117,49 @@ export class GameScene extends Phaser.Scene {
             const foregroundEffectContainer = this.add.container(0, 0); //전면 화면 효과
 
 
-            const pauseBtn = createTextButton(this, 100, 50, 'PAUSE', () => {
+            const layerContainer = createLayerContainer(this, 'myLayer');
+
+            const pause1Btn = createTextButton(this, 0, 0, 'PAUSE', () => {
+            }, {font: '60px SilverFont'});
+
+            const pause2Btn = createTextButton(this, 0, 0, 'PAUSE', () => {
                 alert('test');
-            }, {font: '32px Silver'});
-            uiPauseContainer.add([pauseBtn]);
+            }, {font: '60px SilverFont'});
+
+
+
+            layerContainer.addToGrid(pause1Btn, 0, 0);
+            layerContainer.addToGrid(pause2Btn, 5, 5);
+
+
+            // y12에 0~12까지 1초마다 버튼 하나씩 추가
+            for (let i = 0; i <= 12; i++) {
+                setTimeout(() => {
+                    const testBtn = createButton(this, 0, 0, {key: 'test_sprite', frame: 'sprite_3'}, {key: 'test_sprite', frame: 'sprite_16'}, () => {
+                        alert('test');
+                    }, 1);
+                    testBtn.scale = 4;
+                    layerContainer.addToGrid(testBtn, i, 12);
+                    layerContainer.layoutGrid();
+
+                    console.log(`Cell x${i}, y12:`);
+                    console.log('Cell Size:', layerContainer.getCellSize());
+                    console.log('Button Bounds:', testBtn.getBounds());
+                    console.log('Object Bounds:', layerContainer.getBoundsOfObject(testBtn));
+                    console.log('Cell Bounds:', layerContainer.getCellBounds(i, 12));
+
+                }, i * 1000);
+            }
+
+
+                // console.log(layerContainer.getCellSize());
+                // console.log(testBtn.getBounds());
+                // console.log(layerContainer.getBoundsOfObject(testBtn));
+                // console.log(layerContainer.getCellBounds(12, 12));
+
+            
+            uiPauseContainer.add([layerContainer]);
+
 
 
             //서브컨테이너로 넣기

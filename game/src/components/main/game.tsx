@@ -82,7 +82,12 @@ export default function GameStartScreen() {
 				setLoadCount((prev) => prev + 1);
 			}
 			for (const asset of assetList.images) {
-				await imageLoader.current.loadImage(asset.key, asset.path);
+				if (asset.sprite || false) {
+					const spriteJsonPath = asset.sprite_json ? asset.sprite_json : asset.path.replace(/__sppx__/, '').replace(/\.\w+$/, '.json');
+					await imageLoader.current.loadImage(asset.key, asset.path, spriteJsonPath);
+				} else {
+					await imageLoader.current.loadImage(asset.key, asset.path);
+				}
 				setLoadCount((prev) => prev + 1);
 			}
 		}

@@ -21,6 +21,12 @@
 
     "images": [
         {
+            "sprite": true,
+            "key": "test_sprite",
+            "path": "./game/asset/itch/wastenospace_theme/gui_assets/art/gui_sheet_64x64__sppx__.png",
+            "sprite_json": "./game/asset/itch/wastenospace_theme/gui_assets/art/gui_sheet_64x64.json"
+        },
+        {
             "key": "repo_wolf",
             "path": "./game/asset/image/repo_wolf.png"
         },
