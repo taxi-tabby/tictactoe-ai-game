@@ -40,12 +40,37 @@ export default function PhaserSceneComponent({
         width: 900,
         height: 600,
         type: Phaser.AUTO,
-        transparent: false,
+        transparent: true,
         scene: [EmptyScene, MainScene, GameScene],
         banner: false,
         title: 'TicTacToe with ai by taxi_tabby',
-        backgroundColor: '#fafafa',
-        
+        // backgroundColor: '#333',
+
+        mode: Phaser.Scale.RESIZE, // 화면 크기 변경을 허용
+        autoCenter: Phaser.Scale.CENTER_BOTH, // 화면 중앙에 위치
+
+        pixelArt: true,
+        antialias: false,
+        // input: {
+        //     activePointers: 3, // 마우스 또는 터치포인터의 최대 수
+        //     mouse: true,
+        //     touch: true,
+        //     windowEvents: true
+        // },
+        loader: {
+            // baseURL: 'assets/',  // 자산의 기본 경로
+            crossOrigin: 'anonymous', // CORS 처리
+        },
+        // fps: {
+        //     // target: 60,  // 목표 FPS: 초당 60 프레임
+        //     // forceSetTimeOut: true,  // `requestAnimationFrame`을 사용할지 여부 (기본값: `false`)
+        //     // min: 30,  // 최소 FPS: 30 이하로 내려가지 않도록 제한
+        //     // limit: 120,
+        //     // smoothStep: true,
+        //     // panicMax: 45,
+
+        // },
+
     };
 
 
@@ -79,7 +104,7 @@ export default function PhaserSceneComponent({
 
         // const testimer= setInterval(() => {
         //     console.log('freq', audioLoader.current?.getWaveformData('ingame_bgm'));
-            
+
         // }, 1000);
 
 

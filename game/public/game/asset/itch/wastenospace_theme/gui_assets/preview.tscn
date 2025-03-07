@@ -1,0 +1,440 @@
+[gd_scene load_steps=8 format=3 uid="uid://d30qtji5gyeec"]
+
+[ext_resource type="Theme" uid="uid://4r6b2cnujbph" path="res://gui_assets/waste_no_space.theme" id="1_t4ylw"]
+[ext_resource type="ButtonGroup" uid="uid://c5b5im6wwhc1t" path="res://gui_assets/radio_buttons.tres" id="3_3lpp3"]
+[ext_resource type="Script" path="res://gui_assets/fill_tree.gd" id="3_3wgxv"]
+
+[sub_resource type="GDScript" id="GDScript_82ig5"]
+script/source = "extends Panel
+
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+	pass # Replace with function body.
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(delta):
+	pass
+
+
+func _on_resized():
+	var size = get_viewport_rect().size
+	print(size)
+	pass # Replace with function body.
+"
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_x5x81"]
+
+[sub_resource type="Texture2D" id="Texture2D_a7fws"]
+resource_local_to_scene = false
+resource_name = ""
+
+[sub_resource type="GDScript" id="GDScript_5iu0n"]
+script/source = "extends OptionButton
+
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+	#text = \"OptionButton\"
+	pass # Replace with function body.
+
+"
+
+[node name="Preview" type="Panel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+auto_translate = false
+theme = ExtResource("1_t4ylw")
+script = SubResource("GDScript_82ig5")
+
+[node name="Header" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 13.0
+grow_horizontal = 2
+size_flags_vertical = 0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_x5x81")
+text = "  Waste No Space GUI"
+vertical_alignment = 1
+
+[node name="Button 2" type="Button" parent="."]
+layout_mode = 0
+offset_left = 5.0
+offset_top = 65.0
+offset_right = 77.0
+offset_bottom = 81.0
+toggle_mode = true
+text = "Button
+"
+
+[node name="ButtonsH" type="HBoxContainer" parent="."]
+layout_direction = 2
+layout_mode = 0
+offset_left = 5.0
+offset_top = 29.0
+offset_right = 150.0
+offset_bottom = 40.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+
+[node name="Button 1" type="Button" parent="ButtonsH"]
+layout_mode = 2
+offset_right = 23.0
+offset_bottom = 11.0
+text = "Btn 1
+"
+
+[node name="Button 3" type="Button" parent="ButtonsH"]
+layout_mode = 2
+offset_left = 24.0
+offset_right = 55.0
+offset_bottom = 11.0
+toggle_mode = true
+button_pressed = true
+text = "Toggle
+"
+
+[node name="ButtonDisabled" type="Button" parent="ButtonsH"]
+layout_mode = 2
+offset_left = 56.0
+offset_right = 94.0
+offset_bottom = 11.0
+disabled = true
+toggle_mode = true
+text = "Disabled"
+
+[node name="CheckBox" type="CheckBox" parent="ButtonsH"]
+layout_mode = 2
+offset_left = 95.0
+offset_right = 145.0
+offset_bottom = 11.0
+button_pressed = true
+text = "CheckBox
+"
+
+[node name="CheckButton" type="CheckButton" parent="."]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 109.0
+offset_right = 76.0
+offset_bottom = 120.0
+auto_translate = false
+button_pressed = true
+text = "CheckButton
+"
+
+[node name="CheckButton2" type="CheckButton" parent="."]
+layout_mode = 1
+offset_left = 4.0
+offset_top = 122.0
+offset_right = 76.0
+offset_bottom = 133.0
+auto_translate = false
+text = "CheckButton
+"
+
+[node name="OptionButton" type="OptionButton" parent="."]
+layout_mode = 0
+offset_left = 93.0
+offset_top = 41.0
+offset_right = 165.0
+offset_bottom = 52.0
+alignment = 1
+item_count = 5
+selected = 2
+popup/item_0/text = "Option 1"
+popup/item_0/id = 0
+popup/item_1/text = "Option 2"
+popup/item_1/id = 1
+popup/item_2/text = "Option 3"
+popup/item_2/id = 2
+popup/item_3/text = "Separator"
+popup/item_3/id = 3
+popup/item_3/separator = true
+popup/item_4/text = "Cancel"
+popup/item_4/icon = SubResource("Texture2D_a7fws")
+popup/item_4/id = 4
+script = SubResource("GDScript_5iu0n")
+
+[node name="LineEdit" type="LineEdit" parent="."]
+layout_mode = 0
+offset_left = 5.0
+offset_top = 53.0
+offset_right = 165.0
+offset_bottom = 64.0
+tooltip_text = "Im a LineEdit"
+theme_type_variation = &"LineEditNormal"
+text = "This is a LineEdit"
+placeholder_text = "This is a LineEdit"
+clear_button_enabled = true
+
+[node name="MenuBar" type="MenuBar" parent="."]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 13.0
+offset_right = 64.0
+offset_bottom = 24.0
+flat = true
+
+[node name="File" type="PopupMenu" parent="MenuBar"]
+disable_3d = true
+canvas_item_default_texture_filter = 0
+extend_to_title = true
+content_scale_size = Vector2i(500, 100)
+auto_translate = false
+item_count = 5
+item_0/text = "Open"
+item_0/id = 0
+item_1/text = "New"
+item_1/id = 3
+item_2/text = "Save"
+item_2/id = 2
+item_3/text = ""
+item_3/id = 1
+item_3/separator = true
+item_4/text = "Quit"
+item_4/id = 4
+
+[node name="Project" type="PopupMenu" parent="MenuBar"]
+disable_3d = true
+scaling_3d_scale = 2.0
+item_count = 6
+item_0/text = "Settings"
+item_0/id = 0
+item_1/text = "Version Control"
+item_1/id = 3
+item_2/text = ""
+item_2/id = 2
+item_2/separator = true
+item_3/text = "Export.."
+item_3/id = 1
+item_4/text = "Other"
+item_4/id = 4
+item_4/separator = true
+item_5/text = "Install Template"
+item_5/id = 5
+
+[node name="TextEdit" type="TextEdit" parent="."]
+layout_mode = 0
+offset_left = 186.0
+offset_top = 81.0
+offset_right = 289.0
+offset_bottom = 187.0
+text = "Lorem Ipsum etc. .asd dsa d a  dsad ds  d
+	Lorem Ipsum etc..
+Tabs are visible
+	
+Lorem Ipsum etc..
+	Lorem Ipsum etc..
+Lorem Ipsum etc..
+Lorem Ipsum etc
+
+Lorem Ipsum etc..
+	Lorem Ipsum etc..
+Lorem Ipsum etc..
+Lorem Ipsum etc
+"
+draw_tabs = true
+
+[node name="HSlider" type="HSlider" parent="."]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 96.0
+offset_right = 77.0
+offset_bottom = 105.0
+value = 66.0
+tick_count = 4
+ticks_on_borders = true
+
+[node name="SpinBox" type="SpinBox" parent="."]
+layout_mode = 0
+offset_left = 6.0
+offset_top = 82.0
+offset_right = 40.0
+offset_bottom = 93.0
+theme_type_variation = &"SpinBox2"
+value = 16.0
+
+[node name="ProgressBar" type="ProgressBar" parent="."]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 41.0
+offset_right = 90.0
+offset_bottom = 52.0
+max_value = 50.0
+value = 40.0
+
+[node name="TabContainer" type="TabContainer" parent="."]
+layout_mode = 0
+offset_left = 3.0
+offset_top = 136.0
+offset_right = 112.0
+offset_bottom = 189.0
+drag_to_rearrange_enabled = true
+
+[node name="Tab 1" type="Label" parent="TabContainer"]
+layout_mode = 2
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 17.0
+offset_right = -6.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 0
+text = "Tab 1
+"
+
+[node name="Tab 4" type="Label" parent="TabContainer"]
+visible = false
+layout_mode = 2
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 9.0
+offset_right = -6.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 0
+text = "Tab 4
+
+"
+
+[node name="Tab 2" type="Label" parent="TabContainer"]
+visible = false
+layout_mode = 2
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 9.0
+offset_right = -6.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 0
+text = "tab 2
+"
+
+[node name="Tab 3" type="Label" parent="TabContainer"]
+visible = false
+layout_mode = 2
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 9.0
+offset_right = -6.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 0
+text = "Tab 3"
+
+[node name="Tree" type="Tree" parent="."]
+layout_mode = 0
+offset_left = 167.0
+offset_top = 25.0
+offset_right = 292.0
+offset_bottom = 78.0
+script = ExtResource("3_3wgxv")
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 0
+offset_left = 89.0
+offset_top = 76.0
+offset_right = 146.0
+offset_bottom = 86.0
+text = "ItemList
+"
+
+[node name="Label2" type="Label" parent="."]
+layout_mode = 0
+offset_left = 167.0
+offset_top = 15.0
+offset_right = 224.0
+offset_bottom = 23.0
+text = "TreeView Filled By Code
+"
+
+[node name="Radio1" type="CheckBox" parent="."]
+layout_mode = 0
+offset_left = 116.0
+offset_top = 154.0
+offset_right = 166.0
+offset_bottom = 165.0
+size_flags_vertical = 0
+tooltip_text = "A Button"
+button_pressed = true
+button_group = ExtResource("3_3lpp3")
+text = "Radio1"
+
+[node name="Radio2" type="CheckBox" parent="."]
+layout_mode = 0
+offset_left = 116.0
+offset_top = 166.0
+offset_right = 166.0
+offset_bottom = 177.0
+size_flags_vertical = 0
+button_group = ExtResource("3_3lpp3")
+text = "Radio2
+"
+
+[node name="Radio3" type="CheckBox" parent="."]
+layout_mode = 0
+offset_left = 116.0
+offset_top = 178.0
+offset_right = 166.0
+offset_bottom = 189.0
+size_flags_vertical = 0
+button_group = ExtResource("3_3lpp3")
+text = "Radio3"
+
+[node name="ItemList" type="ItemList" parent="."]
+layout_mode = 0
+offset_left = 88.0
+offset_top = 86.0
+offset_right = 157.0
+offset_bottom = 136.0
+item_count = 8
+max_columns = 2
+same_column_width = true
+item_0/text = "Item 1"
+item_1/text = "Item 2"
+item_2/text = "Item 3"
+item_3/text = "Item 4"
+item_4/text = "Item 5"
+item_5/text = "Item 6"
+item_6/text = "Item 7"
+item_7/text = "Item 8"
+
+[node name="VSlider" type="VSlider" parent="."]
+layout_mode = 0
+offset_left = 171.0
+offset_top = 82.0
+offset_right = 180.0
+offset_bottom = 188.0
+value = 66.0
+tick_count = 6
+ticks_on_borders = true
+
+[node name="HScrollBar" type="HScrollBar" parent="."]
+layout_mode = 0
+offset_left = 84.0
+offset_top = 68.0
+offset_right = 148.0
+offset_bottom = 73.0
+max_value = 50.0
+value = 20.0
+
+[connection signal="resized" from="." to="." method="_on_resized"]

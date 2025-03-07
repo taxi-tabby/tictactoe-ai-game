@@ -1,0 +1,36 @@
+[remap]
+
+importer="font_data_dynamic"
+type="FontFile"
+uid="uid://b0fhden5lnkil"
+path="res://.godot/imported/TinyPixie2.ttf-9f55c64602d480a8ae2cdb50a8c516d3.fontdata"
+
+[deps]
+
+source_file="res://GuiAssets/fonts/TinyPixie2.ttf"
+dest_files=["res://.godot/imported/TinyPixie2.ttf-9f55c64602d480a8ae2cdb50a8c516d3.fontdata"]
+
+[params]
+
+Rendering=null
+antialiasing=0
+generate_mipmaps=false
+multichannel_signed_distance_field=false
+msdf_pixel_range=8
+msdf_size=48
+force_autohinter=false
+hinting=1
+subpixel_positioning=1
+oversampling=0.0
+Fallbacks=null
+fallbacks=[]
+Compress=null
+compress=false
+preload=[{
+"chars": [],
+"glyphs": [],
+"name": "New Configuration"
+}]
+language_support={}
+script_support={}
+opentype_features={}
