@@ -12,7 +12,11 @@ class AudioPlayer {
         this.audio = new Audio();
         this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
         this.sourceNode = this.audioContext.createMediaElementSource(this.audio);
+
+
         this.analyserNode = this.audioContext.createAnalyser();
+        this.analyserNode.fftSize = 256;
+
         this.sourceNode.connect(this.analyserNode);
         this.analyserNode.connect(this.audioContext.destination);
         this.bufferLength = this.analyserNode.frequencyBinCount;
@@ -99,6 +103,10 @@ class AudioPlayer {
     // 현재 오디오 상태 (재생 중 여부)
     public isPlaying(): boolean {
         return !this.audio.paused && !this.audio.ended;
+    }
+
+    public getBufferLength(): number {
+        return this.bufferLength;
     }
 
     // 실시간 주파수 데이터 가져오기
@@ -215,6 +223,11 @@ class AudioManager {
     public getSpectrumData(key: string): Uint8Array | null {
         const player = this.players.get(key);
         return player ? player.getSpectrumData() : null;
+    }
+
+    public getBufferLength(key: string): number | null {
+        const player = this.players.get(key);
+        return player ? player.getBufferLength() : null;
     }
 
     public getCurrentTime(key: string): number | null {

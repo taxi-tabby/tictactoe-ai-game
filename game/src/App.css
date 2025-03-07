@@ -5,6 +5,11 @@
   font-family: 'ArmWrestler';
   src: url('../public/game/asset/font/ArmWrestler/ArmWrestler.ttf') format('truetype');
 }
+@font-face {
+  font-family: 'Silver';
+  src: url('../public/game/asset/itch/font/Silver.ttf') format('truetype');
+}
+
 
 * {
   position: relative;

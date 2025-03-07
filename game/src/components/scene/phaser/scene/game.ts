@@ -1,7 +1,14 @@
 import { TictactoeGameStatus } from "../../../../schema/classes/tictactoe";
 import { tictactoeExtendsSpecialRules } from "../../../../schema/classes/tictactoeExtendsSpecialRules";
+import { TicTacToeAI } from '../../../../schema/classes/model';
+import { AudioManager } from '../../../../schema/classes/audio';
+import { ImageLoader } from '../../../../schema/classes/image';
+import { createTextButton } from "../helper/create/textButton";
 
 export class GameScene extends Phaser.Scene {
+
+
+
     constructor() {
         super({ key: 'GameScene' });
     }
@@ -41,119 +48,130 @@ export class GameScene extends Phaser.Scene {
 
 
     preload() {
+        const audioLoader = this.registry.get('audioLoader');
+        const imageLoader = this.registry.get('imageLoader') as ImageLoader;
+        const modelLoader = this.registry.get('modelLoader');
 
+
+        this.load.image('particle', imageLoader.getImageAsBase64('repo_wolf'));
+        this.load.image('main_bg_1', imageLoader.getImageAsBase64('main_bg_1'));
+        
     }
 
     create() {
-        // this.sys.game.
-        const audioLoader = this.registry.get('audioLoader');
-        const imageLoader = this.registry.get('imageLoader');
-        const modelLoader = this.registry.get('modelLoader');
 
+ 
         const system = new tictactoeExtendsSpecialRules();
-
 
         const sceneGameDone = () => {
             this.clearScene();
             this.add.text(10, 10, 'Game Over', {
                 fontSize: '32px',
-                color: '#ffffff'
+                color: '000'
             });
             const restartButton = this.add.text(10, 50, 'Restart Game', {
                 fontSize: '32px',
                 color: '#ff0000'
             }).setInteractive({ useHandCursor: true });
-
             restartButton.on('pointerdown', () => {
-                this.scene.restart();
+                sceneGaming();
             });
         }
 
         const sceneGaming = () => {
-            const drawBoard = (self: tictactoeExtendsSpecialRules) => {
-                const board = self.getBoard();
-                const boardSizeX = self.mapSizeX.value;
-                const boardSizeY = self.mapSizeY.value;
+            this.clearScene();
 
-                for (let y = 0; y < boardSizeY; y++) {
-                    for (let x = 0; x < boardSizeX; x++) {
-                        const tile = board[y][x];
-                        const tileText = this.add.text(x * 100, y * 100, tile.toString(), {
-                            fontSize: '32px',
-                            color: '#fafafa'
-                        });
+            //게임화면
+            const gameScreenContainer = this.add.container(0, 0);
 
-                        tileText.setInteractive({ useHandCursor: true });
-                        tileText.on('pointerdown', () => {
-                            console.log(`Tile clicked at position (${x}, ${y}) with value: ${tile}`);
+            //ui
+            const uiGlobalTimerContainer = this.add.container(0, 0); //전체 타이머
+            const uiSlideTimerContainer = this.add.container(0, 0); //슬라이드(각 턴당) 타이머
+            const uiPauseContainer = this.add.container(0, 0); //정지버튼
 
-                            const move = self.makeMove(y, x);
+            //게임 시작 전 카운트 다운
+            const gameStartCountDownContainer = this.add.container(0, 0);
 
-                            if (!move.moved) {
-                                console.log(`${move.reason}`);
-                                return;
-                            }
+            //게임 속 화면
+            const gameContainer = this.add.container(0, 0);
 
+            //게임 배경
+            const backgroundContainer = this.add.container(0, 0);
+            const foregroundContainer = this.add.container(0, 0);
 
-                            const check = self.checkWinner();
-                            console.log(check);
-                            if (check.type === 'tile') {
-                                console.log(`Winner: ${check.value}`);
-                                sceneGameDone();
-                                return;
-                            } else if (check.type === 'status' && check.value === TictactoeGameStatus.DRAW) {
-                                console.log(`Draw!`);
-                                sceneGameDone();
-                                return;
-                            }
+            //효과
+            const scapeParticleContainer = this.add.container(0, 0); //전역 파티클
+            const tileParticleContainer = this.add.container(0, 0); //타일 파티클
+            const foregroundEffectContainer = this.add.container(0, 0); //전면 화면 효과
 
 
-                            this.clearScene();
-                            drawBoard(system);
-                            showPlayerInfo(system);
+            const pauseBtn = createTextButton(this, 100, 50, 'PAUSE', () => {
+                alert('test');
+            }, {font: '32px Silver'});
+            uiPauseContainer.add([pauseBtn]);
 
-                        });
-                    }
-                }
-            };
 
-            const showPlayerInfo = (self: tictactoeExtendsSpecialRules) => {
-                const currentPlayer = self.getCurrentPlayer();
-                const controller = self.getController();
+            //서브컨테이너로 넣기
+            gameScreenContainer.add([
+                backgroundContainer,
+                gameContainer,
+                foregroundContainer,
+                scapeParticleContainer,
+                tileParticleContainer,
+                foregroundEffectContainer,
+                uiGlobalTimerContainer,
+                uiSlideTimerContainer,
+                uiPauseContainer,
+                gameStartCountDownContainer
+            ]);
 
-                const boardSizeY = self.mapSizeY.value;
+            // 컨테이너 깊이 설정
+            backgroundContainer.setDepth(0);
+            gameContainer.setDepth(1);
+            scapeParticleContainer.setDepth(2);
+            tileParticleContainer.setDepth(3);
+            foregroundContainer.setDepth(4);
+            foregroundEffectContainer.setDepth(5);
+            uiGlobalTimerContainer.setDepth(6);
+            uiSlideTimerContainer.setDepth(7);
+            gameStartCountDownContainer.setDepth(8);
+            uiPauseContainer.setDepth(9);
 
-                this.add.text(10, (boardSizeY * 90) + 20, `Now turn: ${currentPlayer}`, {
-                    fontSize: '24px',
-                    color: '#ffffff'
-                });
 
-                this.add.text(10, (boardSizeY * 90) + 50, `You: ${controller}`, {
-                    fontSize: '24px',
-                    color: '#ffffff'
-                });
 
-                this.add.text(10, (boardSizeY * 90) + 100, `It has been in development as phaser since 03.06.25`, {
-                    fontSize: '24px',
-                    color: '#ffffff'
-                });
-            };
+            //정지 하면 나오는 화면
+            //환경설정 및 이어하기, 그만하기 버튼 존재
+            // const pauseScreenContainer = this.add.container(0, 0);
 
+
+            
+
+
+
+            // const move = self.makeMove(y, x);
+            // if (!move.moved) {
+            //     console.log(`${move.reason}`);
+            //     return;
+            // }
+            // const check = self.checkWinner();
+            // if (check.type === 'tile') {
+            //     console.log(`Winner: ${check.value}`);
+            //     return;
+            // } else if (check.type === 'status' && check.value === TictactoeGameStatus.DRAW) {
+            //     console.log(`Draw!`);
+            //     return;
+            // }
 
             system.gameStart((self) => {
                 this.gameStartInit(self);
-                this.clearScene();
-                drawBoard(system);
-                showPlayerInfo(system);
             });
 
         }
 
 
+
         //최초에는 게임 진행
         sceneGaming();
-
-
     }
 
     update() {
