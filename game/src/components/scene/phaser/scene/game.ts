@@ -3,6 +3,7 @@ import { tictactoeExtendsSpecialRules } from "../../../../schema/classes/tictact
 import { TicTacToeAI } from '../../../../schema/classes/model';
 import { AudioManager } from '../../../../schema/classes/audio';
 import { ImageLoader } from '../../../../schema/classes/image';
+import { createTextButton } from "../helper/create/textButton";
 
 export class GameScene extends Phaser.Scene {
 
@@ -103,6 +104,13 @@ export class GameScene extends Phaser.Scene {
             const tileParticleContainer = this.add.container(0, 0); //타일 파티클
             const foregroundEffectContainer = this.add.container(0, 0); //전면 화면 효과
 
+
+            const pauseBtn = createTextButton(this, 100, 50, 'PAUSE', () => {
+                alert('test');
+            }, {font: '32px Silver'});
+            uiPauseContainer.add([pauseBtn]);
+
+
             //서브컨테이너로 넣기
             gameScreenContainer.add([
                 backgroundContainer,
@@ -133,7 +141,7 @@ export class GameScene extends Phaser.Scene {
 
             //정지 하면 나오는 화면
             //환경설정 및 이어하기, 그만하기 버튼 존재
-            const pauseScreenContainer = this.add.container(0, 0);
+            // const pauseScreenContainer = this.add.container(0, 0);
 
 
             
