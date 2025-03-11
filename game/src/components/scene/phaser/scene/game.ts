@@ -113,7 +113,7 @@ export class GameScene extends Phaser.Scene {
             //게임 배경
             const backgroundContainer = this.add.container(0, 0);
             const foregroundContainer = this.add.container(0, 0);
-            const backgroundUIContainer = this.add.container(0, 0);
+
 
             //효과
             const scapeParticleContainer = this.add.container(0, 0); //전역 파티클
@@ -125,35 +125,47 @@ export class GameScene extends Phaser.Scene {
 
 
 
-            const pause1Btn = createTextButton(this, 0, 0, 'PAUSE', () => {
+            const pause1Btn = createTextButton(this, 0, 0, 'TEXT1', () => {
             }, {font: '60px SilverFont'});
 
-            const pause2Btn = createTextButton(this, 0, 0, 'PAUSE', () => {
+            const pause2Btn = createTextButton(this, 0, 0, 'TEXT2', () => {
                 alert('test');
             }, {font: '60px SilverFont'});
 
-            const pause3Btn = createTextButton(this, 0, 0, 'PAUSE', () => {
+            const pause3Btn = createTextButton(this, 0, 0, 'TEXT3', () => {
             }, {font: '60px SilverFont'});
 
-            const graphics = this.add.graphics();
 
-   
             layerContainer.addToGrid(pause1Btn, 0, 0);
-            layerContainer.addToGrid(graphics, 5, 5, {callbackRenderUpdate: () => {
-                const bounds = layerContainer.getBoundsOfObject(graphics);
-                if (bounds === null) return;
+            layerContainer.addToGrid(pause2Btn, 12, 12);
 
-                graphics.clear();
-                graphics.fillStyle(0xff0000, 1);
-                graphics.fillRect(bounds.x, bounds.y, (bounds.w * 6), (bounds.h));
-    
+            // 테스트용 사각형 그리드에 추가
+            const testRect = this.add.graphics();
+            layerContainer.addToGrid(testRect, 1, 4, {callbackRenderUpdate: () => {
+                //크기 구해서 랜더링 시 영역 갱신처리
+                const bounds = layerContainer.getCellBoundsByObject(testRect);
+                if (bounds !== null) {
+                    testRect.clear();
+                    testRect.fillStyle(0xff0000, 0.1);
+                    const w = bounds.topRight.x - bounds.topLeft.x;
+                    const h = bounds.bottomLeft.y - bounds.topLeft.y;
+                    testRect.fillRect(bounds.topLeft.x, bounds.topLeft.y, w, h);
+                    console.log(bounds.topLeft.x, bounds.topLeft.y, w, h);
+                };
             }});
-            layerContainer.addToGrid(pause3Btn, 24, 24);
+
+            // 테스트용 사각형 들어간 그리드의 크기를 고정
+            layerContainer.setGridSizeByObject(testRect, {width: 500});
+
+            //같은 ROW에 다음 행에 텍스트 버튼을 추가하는 경우
+            layerContainer.addToGrid(pause3Btn, 2, 4);
 
 
-
-            layerContainer.setGridSizeByObject(graphics, {width: 200, height: 200});
             layerContainer.layoutGrid();
+
+
+
+
 
 
             // console.log(layerContainer.getCellSize());
@@ -169,7 +181,6 @@ export class GameScene extends Phaser.Scene {
             //서브컨테이너로 넣기
             gameScreenContainer.add([
                 backgroundContainer,
-                layerContainer,
                 gameContainer,
                 foregroundContainer,
                 scapeParticleContainer,
@@ -178,12 +189,12 @@ export class GameScene extends Phaser.Scene {
                 uiGlobalTimerContainer,
                 uiSlideTimerContainer,
                 uiPauseContainer,
-                gameStartCountDownContainer
+                gameStartCountDownContainer,
+                layerContainer,
             ]);
 
             // 컨테이너 깊이 설정
             backgroundContainer.setDepth(0);
-            backgroundUIContainer.setDepth(0);
             gameContainer.setDepth(1);
             scapeParticleContainer.setDepth(2);
             tileParticleContainer.setDepth(3);
@@ -193,6 +204,7 @@ export class GameScene extends Phaser.Scene {
             uiSlideTimerContainer.setDepth(7);
             gameStartCountDownContainer.setDepth(8);
             uiPauseContainer.setDepth(9);
+            layerContainer.setDepth(10);
 
 
 

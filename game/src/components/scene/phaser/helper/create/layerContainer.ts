@@ -5,6 +5,10 @@ type specifiedGridSizeData = { width?: number, height?: number };
 type specifiedGridSize = { pos: specifiedGridSizePos, size?: specifiedGridSizeData };
 
 type addObjectOption = {
+
+    /**
+     * 랜더링이 발생하는 경우 같이 실행되는 콜백
+     */
     callbackRenderUpdate?: (() => void) | undefined;
  };
 
@@ -88,23 +92,11 @@ class GridLayout extends Phaser.GameObjects.Container {
             this.grid[row][col] = gameObject;
 
             console.log(`(row: ${row}, col: ${col})에 추가됨`);
-
-            // 화면 크기 가져오기
-            const { width: screenWidth, height: screenHeight } = this.scene.scale;
-
-            // 게임 객체의 x, y 위치를 그리드에 맞게 재계산 (비율 기반)
-            const newX = (col / this.columns) * screenWidth + this.spacing;
-            const newY = (row / this.rows) * screenHeight + this.spacing;
-
-            // 위치를 그리드에 맞게 설정 (Phaser.GameObjects.GameObject의 하위 객체들만 setPosition 호출)
-            if (gameObject instanceof Phaser.GameObjects.Sprite ||
-                gameObject instanceof Phaser.GameObjects.Image ||
-                gameObject instanceof Phaser.GameObjects.Text) {
-                gameObject.setPosition(newX, newY);
-            }
+            console.log(this.grid);
 
             // Container에 게임 객체를 추가
             this.add(gameObject);
+            this.updateItemPosition(gameObject, row, col);
 
             //이벤트 추가
             if (options.callbackRenderUpdate !== undefined) {
@@ -135,6 +127,7 @@ class GridLayout extends Phaser.GameObjects.Container {
      * 전체 객체의 위치를 재조정 하는 용도입니다.
      */
     layoutGrid() {
+        console.log("-------------------    layoutGrid    ------------------- 모든 그리드 재배치");
         this.grid.forEach((row, rowIndex) => {
             row.forEach((gameObject, colIndex) => {
                 if (gameObject) {
@@ -144,65 +137,7 @@ class GridLayout extends Phaser.GameObjects.Container {
         });
     }
 
-    /**
-     * 그리드에서 객체의 위치를 재조정하기 위한 메서드
-     * 단일 그리드의 위치를 재조정합니다
-     * @param gameObject 
-     * @param row 
-     * @param col 
-     */
-    updateItemPosition(gameObject: Phaser.GameObjects.GameObject, row: number, col: number) {
-        let width = 0;
-        let height = 0;
 
-        let debugObjectType = '';
-
-        // 텍스트, 이미지, 스프라이트 객체만 width와 height를 가집니다.
-        if (gameObject instanceof Phaser.GameObjects.Text) {
-            width = gameObject.width;
-            height = gameObject.height;
-            debugObjectType = 'text';
-        } else if (gameObject instanceof Phaser.GameObjects.Image) {
-            width = gameObject.width;
-            height = gameObject.height;
-            debugObjectType = 'Image';
-        } else if (gameObject instanceof Phaser.GameObjects.Sprite) {
-            width = gameObject.width;
-            height = gameObject.height;
-            debugObjectType = 'Sprite';
-        }
-
-        console.log('----------------- ', debugObjectType, row, col, width, height);
-
-        const specifiedGridSize = this.getSpecifiedGridSize({pos: {row, col}});
-
-        // 화면 크기 가져오기
-        const { width: screenWidth, height: screenHeight } = this.scene.scale;
-        // 그리드에 맞는 x, y 위치 계산 (비율 기반)
-        let newX = (col / this.columns) * screenWidth + this.spacing;
-        let newY = (row / this.rows) * screenHeight + this.spacing;
-
-        // // specifiedGridSize 값이 있는 경우 해당 값을 우선으로 사용
-        // if (specifiedGridSize && specifiedGridSize.size) {
-        //     if (specifiedGridSize.size.width !== undefined) {
-        //         newX = specifiedGridSize.size.width;
-        //     }
-        //     if (specifiedGridSize.size.height !== undefined) {
-        //         newY = specifiedGridSize.size.height;
-        //     }
-        // }
-
-  
-
-        // 위치를 그리드에 맞게 설정
-        if (gameObject instanceof Phaser.GameObjects.Sprite ||
-            gameObject instanceof Phaser.GameObjects.Image ||
-            gameObject instanceof Phaser.GameObjects.Text) {
-            gameObject.setPosition(newX, newY);
-        }
-
-        this.callEventRenderUpdate(col, row);
-    }
 
     /**
      * 그리드 크기를 동적으로 확장하는 메서드
@@ -259,66 +194,184 @@ class GridLayout extends Phaser.GameObjects.Container {
         return { row, col };
     }
 
+
+    /**
+     * 그리드에서 객체의 위치를 재조정하기 위한 메서드
+     * 단일 그리드의 위치를 재조정합니다
+     * @param gameObject 
+     * @param row 
+     * @param col 
+     */
+    updateItemPosition(gameObject: Phaser.GameObjects.GameObject, row: number, col: number) {
+        let width = 0;
+        let height = 0;
+        let debugObjectType = '';
+    
+        // 텍스트, 이미지, 스프라이트 객체만 width와 height를 가짐
+        if (gameObject instanceof Phaser.GameObjects.Text) {
+            width = gameObject.width;
+            height = gameObject.height;
+            debugObjectType = 'text';
+        } else if (gameObject instanceof Phaser.GameObjects.Image) {
+            width = gameObject.width;
+            height = gameObject.height;
+            debugObjectType = 'Image';
+        } else if (gameObject instanceof Phaser.GameObjects.Sprite) {
+            width = gameObject.width;
+            height = gameObject.height;
+            debugObjectType = 'Sprite';
+        }
+    
+        // 지정된 크기 가져오기
+        const cell = this.getCellSize();
+    
+        // 화면 크기 가져오기
+        const screen = this.getScreenSize();
+    
+        let newX = 0;
+        let newY = 0;
+    
+        // 해당 col 이전의 너비를 더함
+        for (let c = 0; c < col; c++) {  // 현재 col 제외
+            const prevSpecifiedSize = this.getSpecifiedGridSize({ pos: { row, col: c } });
+            const prevWidth = prevSpecifiedSize?.size?.width ?? cell.width;
+            newX += prevWidth;
+        }
+    
+        // 해당 row 이전의 높이를 더함
+        for (let r = 0; r < row; r++) {  // 현재 row 제외
+            const prevSpecifiedSize = this.getSpecifiedGridSize({ pos: { row: r, col } });
+            const prevHeight = prevSpecifiedSize?.size?.height ?? cell.height;
+            newY += prevHeight;
+        }
+    
+        // 마지막 동적 영역에 대한 처리
+        const lastSpecifiedWidth = this.getSpecifiedGridSize({ pos: { row, col } })?.size?.width;
+        const lastSpecifiedHeight = this.getSpecifiedGridSize({ pos: { row, col } })?.size?.height;
+    
+        // 동적 영역이 존재할 경우
+        let finalWidth = lastSpecifiedWidth ?? cell.width;
+        let finalHeight = lastSpecifiedHeight ?? cell.height;
+    
+        // 화면을 넘지 않도록 비율적으로 크기 조정
+        const maxCellWidth = screen.width / this.columns;
+        const maxCellHeight = screen.height / this.rows;
+    
+        const scaleX = Math.min(maxCellWidth / finalWidth, 1);
+        const scaleY = Math.min(maxCellHeight / finalHeight, 1);
+    
+        finalWidth *= scaleX;
+        finalHeight *= scaleY;
+    
+        // 너비, 높이를 고려하여 실제 위치 계산
+        if (gameObject instanceof Phaser.GameObjects.Sprite ||
+            gameObject instanceof Phaser.GameObjects.Image ||
+            gameObject instanceof Phaser.GameObjects.Text) {
+            gameObject.setPosition(newX + (this.spacing), newY + (this.spacing));
+    
+            // 크기 조정
+            gameObject.setScale(scaleX, scaleY);
+        }
+    
+        // 렌더링 업데이트 이벤트 호출
+        this.callEventRenderUpdate(col, row);
+    }
+    
+
     // 특정 GameObject나 Container가 속한 그리드 셀의 절대 좌표와 크기를 얻는 메서드
-    getBoundsOfObject(gameObject: Phaser.GameObjects.GameObject, spacing: boolean = false) {
-        // 그리드의 크기 (행, 열)
-        const { width: screenWidth, height: screenHeight } = this.scene.scale;
-
-        // 그리드 셀의 크기 계산
-        const cellWidth = screenWidth / this.columns;
-        const cellHeight = screenHeight / this.rows;
-
-        // spacing이 true일 경우 this.spacing을 사용하고, false일 경우 0을 사용
-        const spacingValue = spacing ? this.spacing : 0;
-
-        // grid에서 해당 gameObject가 위치한 row, col을 찾음
+    getSizeOfObject(gameObject: Phaser.GameObjects.GameObject, spacing: boolean = false) {
         const objectAt = this.getObjectAt(gameObject);
+        if (!objectAt) return null;
+    
+        let newX = 0;
+        let newY = 0;
+        let cellWidth = 0;
+        let cellHeight = 0;
+    
+        for (let c = 0; c <= objectAt.col; c++) {
+            const specifiedSize = this.getSpecifiedGridSize({ pos: { row: objectAt.row, col: c } });
+            cellWidth = specifiedSize?.size?.width ?? (screen.width / this.rows);
+            if (c < objectAt.col) newX += cellWidth;
+        }
+    
+        for (let r = 0; r <= objectAt.row; r++) {
+            const specifiedSize = this.getSpecifiedGridSize({ pos: { row: r, col: objectAt.col } });
+            cellHeight = specifiedSize?.size?.height ?? (screen.height / this.rows);
+            if (r < objectAt.row) newY += cellHeight;
+        }
+    
 
-        if (objectAt === undefined)
-            return null;
-
-        // 해당 그리드 셀의 좌상단 좌표 계산
-        const cellX = objectAt.col * cellWidth + spacingValue;
-        const cellY = objectAt.row * cellHeight + spacingValue;
-
-        const w = cellWidth - spacingValue;
-        const h = cellHeight - spacingValue;
-
-        // 반환: 그리드 셀의 좌상단 좌표와 셀의 크기
         return {
-            x: cellX,  // 셀의 좌상단 x
-            y: cellY,  // 셀의 좌상단 y
-            w: w,       // 셀의 너비
-            h: h        // 셀의 높이
+            objectAt: objectAt,
+            x: newX + (spacing ? this.spacing : 0),
+            y: newY + (spacing ? this.spacing : 0),
+            w: cellWidth - (spacing ? this.spacing : 0),
+            h: cellHeight - (spacing ? this.spacing : 0),
+        };
+    }
+    
+
+    getCellBoundsByObject(gameObject: Phaser.GameObjects.GameObject, spacing: boolean = false) {
+        const objectAt = this.getObjectAt(gameObject);
+        if (!objectAt) return null;
+
+        const cell = this.getCellSize();
+
+        let newX = 0;
+        let newY = 0;
+        let cellWidth = 0;
+        let cellHeight = 0;
+    
+        for (let c = 0; c <= objectAt.col; c++) {
+            const specifiedSize = this.getSpecifiedGridSize({ pos: { row: objectAt.row, col: c } });
+            cellWidth = specifiedSize?.size?.width ?? cell.width;
+            if (c < objectAt.col) newX += cellWidth;
+        }
+    
+        for (let r = 0; r <= objectAt.row; r++) {
+            const specifiedSize = this.getSpecifiedGridSize({ pos: { row: r, col: objectAt.col } });
+            cellHeight = specifiedSize?.size?.height ?? cell.height;
+            if (r < objectAt.row) newY += cellHeight;
+        }
+    
+        return {
+            topLeft: { x: newX + (spacing ? this.spacing : 0), y: newY + (spacing ? this.spacing : 0) },
+            topRight: { x: newX + cellWidth - (spacing ? this.spacing : 0), y: newY + (spacing ? this.spacing : 0) },
+            bottomLeft: { x: newX + (spacing ? this.spacing : 0), y: newY + cellHeight - (spacing ? this.spacing : 0) },
+            bottomRight: { x: newX + cellWidth - (spacing ? this.spacing : 0), y: newY + cellHeight - (spacing ? this.spacing : 0) },
         };
     }
 
     // 각 그리드 셀의 좌상, 우상, 좌하, 우하 절대값 계산
-    getCellBounds(row: number, col: number, spacing: boolean = false) {
-        // 화면 크기 가져오기
-        const { width: screenWidth, height: screenHeight } = this.scene.scale;
-
-        // 각 그리드 셀의 크기 계산
-        const cellWidth = screenWidth / this.columns;
-        const cellHeight = screenHeight / this.rows;
-
-        // spacing이 true일 경우 this.spacing을 사용하고, false일 경우 0을 사용
-        const spacingValue = spacing ? this.spacing : 0;
-
-        // 그리드의 좌상, 우상, 좌하, 우하 값 계산
-        const x = col * cellWidth + spacingValue;
-        const y = row * cellHeight + spacingValue;
-
-        const w = cellWidth - spacingValue;
-        const h = cellHeight - spacingValue;
-
-        // 반환: 각 셀의 좌상단, 우상단, 좌하단, 우하단 좌표
+    getCellBoundsByPos(row: number, col: number, spacing: boolean = false) {
+        let newX = 0;
+        let newY = 0;
+        let cellWidth = 0;
+        let cellHeight = 0;
+    
+        for (let c = 0; c <= col; c++) {
+            const specifiedSize = this.getSpecifiedGridSize({ pos: { row, col: c } });
+            cellWidth = specifiedSize?.size?.width ?? (screen.width / this.rows);
+            if (c < col) newX += cellWidth;
+        }
+    
+        for (let r = 0; r <= row; r++) {
+            const specifiedSize = this.getSpecifiedGridSize({ pos: { row: r, col } });
+            cellHeight = specifiedSize?.size?.height ?? (screen.height / this.rows);
+            if (r < row) newY += cellHeight;
+        }
+    
         return {
-            topLeft: { x, y },
-            topRight: { x: x + w, y },
-            bottomLeft: { x, y: y + h },
-            bottomRight: { x: x + w, y: y + h }
+            topLeft: { x: newX + (spacing ? this.spacing : 0), y: newY + (spacing ? this.spacing : 0) },
+            topRight: { x: newX + cellWidth - (spacing ? this.spacing : 0), y: newY + (spacing ? this.spacing : 0) },
+            bottomLeft: { x: newX + (spacing ? this.spacing : 0), y: newY + cellHeight - (spacing ? this.spacing : 0) },
+            bottomRight: { x: newX + cellWidth - (spacing ? this.spacing : 0), y: newY + cellHeight - (spacing ? this.spacing : 0) },
         };
+    }
+    
+    private getScreenSize() {
+        const { width: screenWidth, height: screenHeight } = this.scene.scale;
+        return { width: screenWidth, height: screenHeight };
     }
 
 
@@ -326,13 +379,14 @@ class GridLayout extends Phaser.GameObjects.Container {
     //spacing 값을 계산하지 않음.
     getCellSize() {
         // 화면 크기 가져오기
-        const { width: screenWidth, height: screenHeight } = this.scene.scale;
+        const screen = this.getScreenSize();
 
         // 그리드 셀의 크기 계산
-        const cellWidth = screenWidth / this.columns;
-        const cellHeight = screenHeight / this.rows;
+        const cellWidth = screen.width / this.columns;
+        const cellHeight = screen.height / this.rows;
+        
 
-        return { width: cellWidth, height: cellHeight };
+        return { width: cellWidth, height: cellHeight};
     }
 
     updateSpacing(spacing: number) {
