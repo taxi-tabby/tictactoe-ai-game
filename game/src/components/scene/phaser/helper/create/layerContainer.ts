@@ -1,24 +1,44 @@
 import Phaser from 'phaser';
 
+type specifiedGridSizePos = { row: number, col: number };
+type specifiedGridSizeData = { width?: number, height?: number };
+type specifiedGridSize = { pos: specifiedGridSizePos, size?: specifiedGridSizeData };
+
+type addObjectOption = {
+    callbackRenderUpdate?: (() => void) | undefined;
+ };
+
 // GridLayout 클래스: Phaser.GameObjects.Container를 확장하여 동적 그리드를 관리
 class GridLayout extends Phaser.GameObjects.Container {
     private rows: number;
     private columns: number;
     private spacing: number;
-    private grid: (Phaser.GameObjects.GameObject | null)[][]; // 2D 배열로 그리드 관리
+
+    //지정된 그리드 크기 지정
+    private specifiedGridSize: specifiedGridSize[];
+
+
+    //오브젝트 그리드
+    private grid: (Phaser.GameObjects.GameObject | null)[][];
+    
+    //렌더링 콜백 그리드
+    private renderUpdateEventGrid: ((() => void) | undefined)[][];
 
     constructor(scene: Phaser.Scene, rows: number = 3, columns: number = 3, spacing: number = 0) {
         super(scene, 0, 0);
         this.rows = rows;
         this.columns = columns;
         this.spacing = spacing;
+        this.specifiedGridSize = [];
+        
 
         // 그리드를 2D 배열로 초기화
         this.grid = Array.from({ length: rows }, () => Array(columns).fill(null));
+        this.renderUpdateEventGrid = Array.from({ length: rows }, () => Array(columns).fill(undefined));
     }
 
     // 그리드에 GameObject 또는 Container 추가
-    addToGrid(gameObject: Phaser.GameObjects.GameObject | Phaser.GameObjects.Container, x: number, y: number) {
+    addToGrid(gameObject: Phaser.GameObjects.GameObject | Phaser.GameObjects.Container, x: number, y: number, options: addObjectOption = {}) {
         // 그리드 크기 확장 체크
         this.expandGrid(x, y);
 
@@ -27,14 +47,21 @@ class GridLayout extends Phaser.GameObjects.Container {
             this.addContainerToGrid(gameObject, x, y);
         } else {
             // 일반 게임 객체일 경우 그리드에 추가
-            this.addObjectToGrid(gameObject, x, y);
+            this.addObjectToGrid(gameObject, x, y, options);
         }
 
-        console.log('그리드 상태:', this.grid);
+        // console.log('그리드 상태:', this.grid);
+    }
+
+    private callEventRenderUpdate(x: number, y: number) {
+        if (this.renderUpdateEventGrid[y][x] !== undefined) {
+            const e = this.renderUpdateEventGrid[y][x];
+            if (e) e();
+        }
     }
 
     // 그리드에 일반 GameObject 추가
-    private addObjectToGrid(gameObject: Phaser.GameObjects.GameObject, x: number, y: number) {
+    private addObjectToGrid(gameObject: Phaser.GameObjects.GameObject, x: number, y: number, options: addObjectOption = {}) {
         let width = 0;
         let height = 0;
 
@@ -54,6 +81,7 @@ class GridLayout extends Phaser.GameObjects.Container {
         const row = y;
         const col = x;
 
+        
         // 그리드 범위 체크
         if (row < this.rows && col < this.columns) {
             // 그리드에 GameObject 위치 지정
@@ -77,6 +105,14 @@ class GridLayout extends Phaser.GameObjects.Container {
 
             // Container에 게임 객체를 추가
             this.add(gameObject);
+
+            //이벤트 추가
+            if (options.callbackRenderUpdate !== undefined) {
+                this.renderUpdateEventGrid[row][col] = options.callbackRenderUpdate;
+            }
+
+            //랜더링 이벤트 실행
+            this.callEventRenderUpdate(col, row);
         }
     }
 
@@ -94,7 +130,10 @@ class GridLayout extends Phaser.GameObjects.Container {
         this.add(container);
     }
 
-    // 그리드 내 모든 객체의 위치를 새로 배치
+    /**
+     * 그리드 내 모든 객체의 위치를 새로 배치합니다.
+     * 전체 객체의 위치를 재조정 하는 용도입니다.
+     */
     layoutGrid() {
         this.grid.forEach((row, rowIndex) => {
             row.forEach((gameObject, colIndex) => {
@@ -105,29 +144,55 @@ class GridLayout extends Phaser.GameObjects.Container {
         });
     }
 
-    // 그리드에서 객체의 위치를 재조정하기 위한 메서드
+    /**
+     * 그리드에서 객체의 위치를 재조정하기 위한 메서드
+     * 단일 그리드의 위치를 재조정합니다
+     * @param gameObject 
+     * @param row 
+     * @param col 
+     */
     updateItemPosition(gameObject: Phaser.GameObjects.GameObject, row: number, col: number) {
         let width = 0;
         let height = 0;
+
+        let debugObjectType = '';
 
         // 텍스트, 이미지, 스프라이트 객체만 width와 height를 가집니다.
         if (gameObject instanceof Phaser.GameObjects.Text) {
             width = gameObject.width;
             height = gameObject.height;
+            debugObjectType = 'text';
         } else if (gameObject instanceof Phaser.GameObjects.Image) {
             width = gameObject.width;
             height = gameObject.height;
+            debugObjectType = 'Image';
         } else if (gameObject instanceof Phaser.GameObjects.Sprite) {
             width = gameObject.width;
             height = gameObject.height;
+            debugObjectType = 'Sprite';
         }
+
+        console.log('----------------- ', debugObjectType, row, col, width, height);
+
+        const specifiedGridSize = this.getSpecifiedGridSize({pos: {row, col}});
 
         // 화면 크기 가져오기
         const { width: screenWidth, height: screenHeight } = this.scene.scale;
-
         // 그리드에 맞는 x, y 위치 계산 (비율 기반)
-        const newX = (col / this.columns) * screenWidth + this.spacing;
-        const newY = (row / this.rows) * screenHeight + this.spacing;
+        let newX = (col / this.columns) * screenWidth + this.spacing;
+        let newY = (row / this.rows) * screenHeight + this.spacing;
+
+        // // specifiedGridSize 값이 있는 경우 해당 값을 우선으로 사용
+        // if (specifiedGridSize && specifiedGridSize.size) {
+        //     if (specifiedGridSize.size.width !== undefined) {
+        //         newX = specifiedGridSize.size.width;
+        //     }
+        //     if (specifiedGridSize.size.height !== undefined) {
+        //         newY = specifiedGridSize.size.height;
+        //     }
+        // }
+
+  
 
         // 위치를 그리드에 맞게 설정
         if (gameObject instanceof Phaser.GameObjects.Sprite ||
@@ -135,9 +200,16 @@ class GridLayout extends Phaser.GameObjects.Container {
             gameObject instanceof Phaser.GameObjects.Text) {
             gameObject.setPosition(newX, newY);
         }
+
+        this.callEventRenderUpdate(col, row);
     }
 
-    // 그리드 크기를 동적으로 확장
+    /**
+     * 그리드 크기를 동적으로 확장하는 메서드
+     * 입력되는 크기에 따라 확장합니다.
+     * @param x 
+     * @param y 
+     */
     private expandGrid(x: number, y: number) {
         const requiredRows = y + 1; // 최소 y+1 만큼의 행이 필요
         const requiredCols = x + 1; // 최소 x+1 만큼의 열이 필요
@@ -146,6 +218,7 @@ class GridLayout extends Phaser.GameObjects.Container {
         if (requiredRows > this.rows) {
             for (let i = this.rows; i < requiredRows; i++) {
                 this.grid.push(Array(this.columns).fill(null)); // 새로운 행 추가
+                this.renderUpdateEventGrid.push(Array(this.columns).fill(null));
             }
             this.rows = requiredRows;
         }
@@ -153,24 +226,14 @@ class GridLayout extends Phaser.GameObjects.Container {
         if (requiredCols > this.columns) {
             for (let i = 0; i < this.rows; i++) {
                 this.grid[i].length = requiredCols; // 각 행에 열을 추가
+                this.renderUpdateEventGrid[i].length = requiredCols;
             }
             this.columns = requiredCols;
         }
     }
 
 
-    // 특정 GameObject나 Container가 속한 그리드 셀의 절대 좌표와 크기를 얻는 메서드
-    getBoundsOfObject(gameObject: Phaser.GameObjects.GameObject, spacing: boolean = false) {
-        // 그리드의 크기 (행, 열)
-        const { width: screenWidth, height: screenHeight } = this.scene.scale;
-
-        // 그리드 셀의 크기 계산
-        const cellWidth = screenWidth / this.columns;
-        const cellHeight = screenHeight / this.rows;
-
-        // spacing이 true일 경우 this.spacing을 사용하고, false일 경우 0을 사용
-        const spacingValue = spacing ? this.spacing : 0;
-
+    private getObjectAt(gameObject: Phaser.GameObjects.GameObject): { row: number, col: number } | undefined {
         // grid에서 해당 gameObject가 위치한 row, col을 찾음
         let row = -1;
         let col = -1;
@@ -190,12 +253,33 @@ class GridLayout extends Phaser.GameObjects.Container {
         // gameObject가 grid에 없을 경우
         if (row === -1 || col === -1) {
             console.error("The specified gameObject is not found in the grid.");
-            return null;
+            return undefined;
         }
 
+        return { row, col };
+    }
+
+    // 특정 GameObject나 Container가 속한 그리드 셀의 절대 좌표와 크기를 얻는 메서드
+    getBoundsOfObject(gameObject: Phaser.GameObjects.GameObject, spacing: boolean = false) {
+        // 그리드의 크기 (행, 열)
+        const { width: screenWidth, height: screenHeight } = this.scene.scale;
+
+        // 그리드 셀의 크기 계산
+        const cellWidth = screenWidth / this.columns;
+        const cellHeight = screenHeight / this.rows;
+
+        // spacing이 true일 경우 this.spacing을 사용하고, false일 경우 0을 사용
+        const spacingValue = spacing ? this.spacing : 0;
+
+        // grid에서 해당 gameObject가 위치한 row, col을 찾음
+        const objectAt = this.getObjectAt(gameObject);
+
+        if (objectAt === undefined)
+            return null;
+
         // 해당 그리드 셀의 좌상단 좌표 계산
-        const cellX = col * cellWidth + spacingValue;
-        const cellY = row * cellHeight + spacingValue;
+        const cellX = objectAt.col * cellWidth + spacingValue;
+        const cellY = objectAt.row * cellHeight + spacingValue;
 
         const w = cellWidth - spacingValue;
         const h = cellHeight - spacingValue;
@@ -253,6 +337,55 @@ class GridLayout extends Phaser.GameObjects.Container {
 
     updateSpacing(spacing: number) {
         this.spacing = spacing;
+    }
+
+
+
+    /**
+     * 지정된 그리드 크기를 설정합니다.
+     * data 의 size 값이 없는 경우 해제됩니다.
+     * @param data 
+     */
+    private setSpecifiedGridSize(data: specifiedGridSize) {
+        const existingIndex = this.specifiedGridSize.findIndex(grid => grid.pos.row === data.pos.row && grid.pos.col === data.pos.col);
+        if (existingIndex !== -1) {
+            if (data.size && (data.size.width !== undefined || data.size.height !== undefined)) {
+                this.specifiedGridSize[existingIndex] = data;
+            } else {
+                this.specifiedGridSize.splice(existingIndex, 1);
+            }
+        } else {
+            this.specifiedGridSize.push(data);
+        }
+    }
+    
+
+    private getSpecifiedGridSize(data: specifiedGridSize) {
+        const existingIndex = this.specifiedGridSize.findIndex(grid => grid.pos.row === data.pos.row && grid.pos.col === data.pos.col);
+        if (existingIndex !== -1) {
+            return this.specifiedGridSize[existingIndex];
+        } else {
+            return undefined;
+        }
+    }
+
+    /**
+     * 위치로 지정된 쉘 그리드 
+     * @param data 
+     */
+    setGridSizeByGridPos(data: specifiedGridSize) {
+        this.setSpecifiedGridSize(data);
+    }
+
+    /**
+     * 오브젝트로 지정된 쉘 그리드
+     * @param gameObject 
+     * @param data 
+     */
+    setGridSizeByObject(gameObject: Phaser.GameObjects.GameObject, data?: specifiedGridSizeData) {
+        const objectAt = this.getObjectAt(gameObject);
+        if (objectAt !== undefined)
+            this.setSpecifiedGridSize({pos: {col: objectAt.col, row: objectAt.row}, size: data});
     }
 
 }

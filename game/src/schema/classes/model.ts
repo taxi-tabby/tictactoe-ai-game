@@ -18,48 +18,6 @@ export class TicTacToeAI {
         }
     }
 
-    // public async predict(key: string, boardState: number[][]): Promise<number> {
-    //     const model = this.models.get(key);
-    //     if (!model) {
-    //         throw new Error(`Model with key ${key} not found`);
-    //     }
-    //     const input = tf.tensor4d([[boardState]], [1, 3, 3, 1]);
-
-    //     const prediction = model.predict(input) as tf.Tensor;
-    //     const predictedMove = (await prediction.argMax(-1).data())[0];
-    //     return predictedMove;
-    // }
-
-    // public async predict(key: string, boardState: number[][]): Promise<number> {
-    //     const model = this.models.get(key);
-    //     if (!model) {
-    //         throw new Error(`Model with key ${key} not found`);
-    //     }
-    
-    //     // boardState를 1D 배열로 변환
-    //     const flatBoardState = boardState.flat();  // [1, 0, -1, 0, 1, 0, -1, 0, 1]
-    
-    //     // 1D 배열을 4D 텐서로 변환
-    //     const input = tf.tensor4d(flatBoardState, [1, 3, 3, 1]);  // [1, 3, 3, 1] 형태로 텐서 생성
-    
-    //     // 예측 실행
-    //     const prediction = model.predict(input) as tf.Tensor;
-        
-    //     const probabilities = await prediction.data();
-    //     console.log('probabilities: ', probabilities);
-
-    //     // 이미 둔 곳이 아닌 비어있는 곳 중에서 가장 확률이 높은 위치를 찾기
-    //     const emptyIndices = flatBoardState
-    //         .map((value, index) => (value === 0 ? index : -1))
-    //         .filter(index => index !== -1);
-
-    //     const emptyProbabilities = emptyIndices.map(index => probabilities[index]);
-
-    //     const maxProbabilityIndex = emptyProbabilities.indexOf(Math.max(...emptyProbabilities));
-    //     const predictedMove = emptyIndices[maxProbabilityIndex];
-
-    //     return predictedMove;
-    // }
     
     
     public async predict(key: string, boardState: number[][]): Promise<number> {
@@ -148,7 +106,7 @@ export class TicTacToeAI {
         const targetTensor = tf.tensor2d(targets);
         model.compile({ optimizer: 'adam', loss: 'meanSquaredError' });
         await model.fit(inputTensor, targetTensor, {
-            epochs: trainingData.length,
+            epochs: 21,
             shuffle: true,
             callbacks: {
             onEpochEnd: (epoch, logs) => {

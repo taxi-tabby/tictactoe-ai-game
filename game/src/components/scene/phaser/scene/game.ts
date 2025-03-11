@@ -6,6 +6,7 @@ import { ImageLoader } from '../../../../schema/classes/image';
 import { createTextButton } from "../helper/create/textButton";
 import { createButton } from "../helper/create/button";
 import createLayerContainer from "../helper/create/layerContainer";
+import { model } from "@tensorflow/tfjs";
 
 export class GameScene extends Phaser.Scene {
 
@@ -30,7 +31,7 @@ export class GameScene extends Phaser.Scene {
             self.setCurrentPlayer(whoPlayFirst);
 
             //게임 보드 초기는 3x3으로 시작
-            self.setBoardSize(5, 5);
+            self.setBoardSize(3, 3);
 
             //출력ㅌxxx
             this.showGameConfigToConsole(self);
@@ -52,8 +53,6 @@ export class GameScene extends Phaser.Scene {
     preload() {
         const audioLoader = this.registry.get('audioLoader');
         const imageLoader = this.registry.get('imageLoader') as ImageLoader;
-        const modelLoader = this.registry.get('modelLoader');
-
 
         this.load.image('particle', imageLoader.getImageAsBase64('repo_wolf'));
         this.load.image('main_bg_1', imageLoader.getImageAsBase64('main_bg_1'));
@@ -70,10 +69,14 @@ export class GameScene extends Phaser.Scene {
 
     }
 
-    create() {
+    async create() {
 
  
         const system = new tictactoeExtendsSpecialRules();
+
+        const modelLoader = this.registry.get('modelLoader') as TicTacToeAI;
+
+
 
         const sceneGameDone = () => {
             this.clearScene();
@@ -110,14 +113,17 @@ export class GameScene extends Phaser.Scene {
             //게임 배경
             const backgroundContainer = this.add.container(0, 0);
             const foregroundContainer = this.add.container(0, 0);
+            const backgroundUIContainer = this.add.container(0, 0);
 
             //효과
             const scapeParticleContainer = this.add.container(0, 0); //전역 파티클
             const tileParticleContainer = this.add.container(0, 0); //타일 파티클
             const foregroundEffectContainer = this.add.container(0, 0); //전면 화면 효과
 
-
+            //컨테이너 그리드 
             const layerContainer = createLayerContainer(this, 'myLayer');
+
+
 
             const pause1Btn = createTextButton(this, 0, 0, 'PAUSE', () => {
             }, {font: '60px SilverFont'});
@@ -126,45 +132,44 @@ export class GameScene extends Phaser.Scene {
                 alert('test');
             }, {font: '60px SilverFont'});
 
+            const pause3Btn = createTextButton(this, 0, 0, 'PAUSE', () => {
+            }, {font: '60px SilverFont'});
 
+            const graphics = this.add.graphics();
 
+   
             layerContainer.addToGrid(pause1Btn, 0, 0);
-            layerContainer.addToGrid(pause2Btn, 5, 5);
+            layerContainer.addToGrid(graphics, 5, 5, {callbackRenderUpdate: () => {
+                const bounds = layerContainer.getBoundsOfObject(graphics);
+                if (bounds === null) return;
+
+                graphics.clear();
+                graphics.fillStyle(0xff0000, 1);
+                graphics.fillRect(bounds.x, bounds.y, (bounds.w * 6), (bounds.h));
+    
+            }});
+            layerContainer.addToGrid(pause3Btn, 24, 24);
 
 
-            // y12에 0~12까지 1초마다 버튼 하나씩 추가
-            for (let i = 0; i <= 12; i++) {
-                setTimeout(() => {
-                    const testBtn = createButton(this, 0, 0, {key: 'test_sprite', frame: 'sprite_3'}, {key: 'test_sprite', frame: 'sprite_16'}, () => {
-                        alert('test');
-                    }, 1);
-                    testBtn.scale = 4;
-                    layerContainer.addToGrid(testBtn, i, 12);
-                    layerContainer.layoutGrid();
 
-                    console.log(`Cell x${i}, y12:`);
-                    console.log('Cell Size:', layerContainer.getCellSize());
-                    console.log('Button Bounds:', testBtn.getBounds());
-                    console.log('Object Bounds:', layerContainer.getBoundsOfObject(testBtn));
-                    console.log('Cell Bounds:', layerContainer.getCellBounds(i, 12));
-
-                }, i * 1000);
-            }
+            layerContainer.setGridSizeByObject(graphics, {width: 200, height: 200});
+            layerContainer.layoutGrid();
 
 
-                // console.log(layerContainer.getCellSize());
-                // console.log(testBtn.getBounds());
-                // console.log(layerContainer.getBoundsOfObject(testBtn));
-                // console.log(layerContainer.getCellBounds(12, 12));
+            // console.log(layerContainer.getCellSize());
+            // console.log(testBtn.getBounds());
+            // console.log(layerContainer.getBoundsOfObject(testBtn));
+            // console.log(layerContainer.getCellBounds(12, 12));
 
             
-            uiPauseContainer.add([layerContainer]);
+            // uiPauseContainer.add([layerContainer]);
 
 
 
             //서브컨테이너로 넣기
             gameScreenContainer.add([
                 backgroundContainer,
+                layerContainer,
                 gameContainer,
                 foregroundContainer,
                 scapeParticleContainer,
@@ -178,6 +183,7 @@ export class GameScene extends Phaser.Scene {
 
             // 컨테이너 깊이 설정
             backgroundContainer.setDepth(0);
+            backgroundUIContainer.setDepth(0);
             gameContainer.setDepth(1);
             scapeParticleContainer.setDepth(2);
             tileParticleContainer.setDepth(3);
@@ -213,8 +219,18 @@ export class GameScene extends Phaser.Scene {
             //     return;
             // }
 
-            system.gameStart((self) => {
+            system.gameStart(async (self) => {
                 this.gameStartInit(self);
+                
+                    // const test = [
+                    //     [-1,0,0],
+                    //     [1,1,-1],
+                    //     [0,0,0]
+                    // ];
+                    // const pre = await modelLoader.predict('3x3', test);
+                    // console.log('AI Prediction:', pre);
+
+
             });
 
         }

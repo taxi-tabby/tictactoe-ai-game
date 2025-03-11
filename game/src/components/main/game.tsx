@@ -13,7 +13,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AudioPlayer, AudioManager } from "../../schema/classes/audio";
 import { TicTacToeAI } from "../../schema/classes/model";
 import { ImageLoader } from "../../schema/classes/image";
-import assetList from '../../assets.json';
+import assetList from '../../assets';
 
 import 'swiper/css';
 import 'swiper/css/effect-fade';
@@ -74,8 +74,10 @@ export default function GameStartScreen() {
 			setTotalLCount(assetList.images.length + assetList.audio.length + assetList.aimodel.length);
 
 			for (const asset of assetList.aimodel) {
-				await modelLoader.current.addModel(asset.key, asset.path);
-				setLoadCount((prev) => prev + 1);
+				if (asset.allow || false) {
+					await modelLoader.current.addModel(asset.key, asset.path);
+					setLoadCount((prev) => prev + 1);
+				}
 			}
 			for (const asset of assetList.audio) {
 				await audioLoader.current.addAudio(asset.key, asset.path, { loop: asset.loop ?? false, volume: asset.volume ?? 1.0 });
