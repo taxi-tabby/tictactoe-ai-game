@@ -7,13 +7,25 @@ import { createTextButton } from "../helper/create/textButton";
 import { createButton } from "../helper/create/button";
 import createLayerContainer from "../helper/create/layerContainer";
 import { model } from "@tensorflow/tfjs";
+import RexUIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin.js';
 
 export class GameScene extends Phaser.Scene {
 
 
 
     constructor() {
-        super({ key: 'GameScene' });
+        super({ 
+            key: 'GameScene', 
+            // plugins: {
+            //     scene: [
+            //         {
+            //             key: 'rexUI',
+            //             plugin: RexUIPlugin,
+            //             mapping: 'rexUI'
+            //         },
+            //     ]
+            // }
+        });
     }
 
     private gameStartInit(self: tictactoeExtendsSpecialRules) {
@@ -35,6 +47,8 @@ export class GameScene extends Phaser.Scene {
 
             //출력ㅌxxx
             this.showGameConfigToConsole(self);
+
+        
         });
     }
 
@@ -77,7 +91,6 @@ export class GameScene extends Phaser.Scene {
         const modelLoader = this.registry.get('modelLoader') as TicTacToeAI;
 
 
-
         const sceneGameDone = () => {
             this.clearScene();
             this.add.text(10, 10, 'Game Over', {
@@ -95,6 +108,8 @@ export class GameScene extends Phaser.Scene {
 
         const sceneGaming = () => {
             this.clearScene();
+
+            console.log(this.rexUI.add.sizer({}));
 
             //게임화면
             const gameScreenContainer = this.add.container(0, 0);
@@ -120,61 +135,51 @@ export class GameScene extends Phaser.Scene {
             const tileParticleContainer = this.add.container(0, 0); //타일 파티클
             const foregroundEffectContainer = this.add.container(0, 0); //전면 화면 효과
 
+
+
+            const layerContainer = this.add.container(0, 0);
             //컨테이너 그리드 
-            const layerContainer = createLayerContainer(this, 'myLayer');
+            // const layerContainer = createLayerContainer(this, 'globalGrid', 0, 3, 3);
+
+            // const grid_TopPadding = this.add.graphics();
+            // const grid_BottomPadding = this.add.graphics();
+
+            // layerContainer.addToGrid(grid_TopPadding, 0, 0, {callbackRenderUpdate: (object: Phaser.GameObjects.Graphics) => {
+            //     //크기 구해서 랜더링 시 영역 갱신처리
+            //     const bounds = layerContainer.getCellBoundsByObject(object);
+            //     if (bounds !== null) {
+            //         const w = bounds.topRight.x - bounds.topLeft.x;
+            //         const h = bounds.bottomLeft.y - bounds.topLeft.y;
+                    
+            //         object.clear();
+            //         const randomColor = Phaser.Display.Color.RandomRGB();
+            //         object.fillStyle(randomColor.color, 0.1);
+            //         object.fillRect(bounds.topLeft.x, bounds.topLeft.y, w * 3, h);
+            //     };
+            // }});
+            // layerContainer.setGridSizeByObject(grid_TopPadding, {height: 20});
+
+            // layerContainer.addToGrid(grid_BottomPadding, 0, 2, {callbackRenderUpdate: (object: Phaser.GameObjects.Graphics) => {
+            //     //크기 구해서 랜더링 시 영역 갱신처리
+            //     const bounds = layerContainer.getCellBoundsByObject(object);
+            //     if (bounds !== null) {
+            //         const w = bounds.topRight.x - bounds.topLeft.x;
+            //         const h = bounds.bottomLeft.y - bounds.topLeft.y;
+                    
+            //         object.clear();
+            //         const randomColor = Phaser.Display.Color.RandomRGB();
+            //         object.fillStyle(randomColor.color, 0.1);
+            //         object.fillRect(bounds.topLeft.x, bounds.topLeft.y, w * 3, h);
+            //     };
+            // }});
+            // layerContainer.setGridSizeByObject(grid_BottomPadding, {height: 20});
 
 
-
-            const pause1Btn = createTextButton(this, 0, 0, 'TEXT1', () => {
-            }, {font: '60px SilverFont'});
-
-            const pause2Btn = createTextButton(this, 0, 0, 'TEXT2', () => {
-                alert('test');
-            }, {font: '60px SilverFont'});
-
-            const pause3Btn = createTextButton(this, 0, 0, 'TEXT3', () => {
-            }, {font: '60px SilverFont'});
-
-
-            layerContainer.addToGrid(pause1Btn, 0, 0);
-            layerContainer.addToGrid(pause2Btn, 12, 12);
-
-            // 테스트용 사각형 그리드에 추가
-            const testRect = this.add.graphics();
-            layerContainer.addToGrid(testRect, 1, 4, {callbackRenderUpdate: () => {
-                //크기 구해서 랜더링 시 영역 갱신처리
-                const bounds = layerContainer.getCellBoundsByObject(testRect);
-                if (bounds !== null) {
-                    testRect.clear();
-                    testRect.fillStyle(0xff0000, 0.1);
-                    const w = bounds.topRight.x - bounds.topLeft.x;
-                    const h = bounds.bottomLeft.y - bounds.topLeft.y;
-                    testRect.fillRect(bounds.topLeft.x, bounds.topLeft.y, w, h);
-                    console.log(bounds.topLeft.x, bounds.topLeft.y, w, h);
-                };
-            }});
-
-            // 테스트용 사각형 들어간 그리드의 크기를 고정
-            layerContainer.setGridSizeByObject(testRect, {width: 500});
-
-            //같은 ROW에 다음 행에 텍스트 버튼을 추가하는 경우
-            layerContainer.addToGrid(pause3Btn, 2, 4);
-
-
-            layerContainer.layoutGrid();
+            // layerContainer.layoutGrid();
 
 
 
 
-
-
-            // console.log(layerContainer.getCellSize());
-            // console.log(testBtn.getBounds());
-            // console.log(layerContainer.getBoundsOfObject(testBtn));
-            // console.log(layerContainer.getCellBounds(12, 12));
-
-            
-            // uiPauseContainer.add([layerContainer]);
 
 
 

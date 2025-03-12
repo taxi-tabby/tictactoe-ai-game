@@ -3,7 +3,10 @@ import { TicTacToeAI } from '../../schema/classes/model';
 import { AudioManager } from '../../schema/classes/audio';
 import { ImageLoader } from '../../schema/classes/image';
 import { tictactoeExtendsSpecialRules } from '../../schema/classes/tictactoeExtendsSpecialRules';
+
 import Phaser, { Game } from "phaser";
+import RexUIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin.js';
+
 import { motion } from 'framer-motion';
 import MonitorComponent from '../component/monitorComponent';
 
@@ -47,7 +50,20 @@ export default function PhaserSceneComponent({
         // backgroundColor: '#333',
 
         mode: Phaser.Scale.RESIZE, // 화면 크기 변경을 허용
-        autoCenter: Phaser.Scale.CENTER_BOTH, // 화면 중앙에 위치
+        // autoCenter: Phaser.Scale.CENTER_BOTH, // 화면 중앙에 위치
+        
+        plugins: {
+            global: [
+
+            ],
+            scene: [
+                {
+                    key: 'rexUI',
+                    plugin: RexUIPlugin,
+                    mapping: 'rexUI',
+                },
+            ]
+        },
 
         pixelArt: true,
         antialias: false,

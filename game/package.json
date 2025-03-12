@@ -19,6 +19,7 @@
     "framer-motion": "^12.4.7",
     "lottie-react": "^2.4.1",
     "phaser": "^3.88.2",
+    "phaser3-rex-plugins": "^1.80.14",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-modal": "^3.16.3",
