@@ -1,6 +1,6 @@
 # Tic-Tac-Toe AI Game
 
-This project implements a Tic-Tac-Toe game using TensorFlow Keras neural networks. The AI has been trained on 500,000 data to create a more enjoyable playing experience compared to traditional algorithms.
+This project implements a Tic-Tac-Toe game using TensorFlow Keras neural networks. The AI has been trained on many many data to create a more enjoyable playing experience compared to traditional algorithms.
 
 ## Features
 - AI trained with TensorFlow and Keras
