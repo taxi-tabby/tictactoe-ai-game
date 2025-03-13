@@ -39,7 +39,7 @@ function createTextButton(
             button.setStyle(buttonStyles);
             button.setVisible(true);
         }, 0);
-        console.log(buttonStyles);
+        // console.log(buttonStyles);
     });
 
 

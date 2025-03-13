@@ -159,6 +159,13 @@ abstract class BoardGame {
         return this.board.value;
     }
 
+    /**
+     * 보드의 모든 배열의 값을 정수로 변환하여 반환
+     */
+    getBoardAsNumbers(): number[][] {
+        return this.board.value.map(row => row.map(tile => Number(tile)));
+    }
+
     getCurrentPlayer(): TileValue {
         return this.currentPlayer.value;
     }
