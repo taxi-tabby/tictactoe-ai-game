@@ -3,11 +3,13 @@
 Still in development.  
 Currently testing features.  
 
-- Uses **Q-learning** for AI.  
-- Test version trained with **200,000 samples**.  
-- UX/UI developed with **Phaser** and **React**.  
+[About this game](https://github.com/taxi-tabby/tictactoe-ai-game/tree/convert-to-phaser/game)
+
+----
 
 [Latest Development Progress](https://github.com/taxi-tabby/tictactoe-ai-game/tree/convert-to-phaser)
+
+----
 
 ## Development Notes
 
