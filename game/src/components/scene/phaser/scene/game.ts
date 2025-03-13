@@ -5,17 +5,18 @@ import { AudioManager } from '../../../../schema/classes/audio';
 import { ImageLoader } from '../../../../schema/classes/image';
 import { createTextButton } from "../helper/create/textButton";
 import { createButton } from "../helper/create/button";
-import createLayerContainer from "../helper/create/layerContainer";
+import createLayerContainer, { GridLayout } from "../helper/create/layerContainer";
 import { model } from "@tensorflow/tfjs";
 import RexUIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin.js';
+import { calcGridPercent } from "../../../../schema/classes/math";
 
 export class GameScene extends Phaser.Scene {
 
 
 
     constructor() {
-        super({ 
-            key: 'GameScene', 
+        super({
+            key: 'GameScene',
             // plugins: {
             //     scene: [
             //         {
@@ -48,7 +49,7 @@ export class GameScene extends Phaser.Scene {
             //출력ㅌxxx
             this.showGameConfigToConsole(self);
 
-        
+
         });
     }
 
@@ -65,13 +66,15 @@ export class GameScene extends Phaser.Scene {
 
 
     preload() {
+        console.clear();
+
         const audioLoader = this.registry.get('audioLoader');
         const imageLoader = this.registry.get('imageLoader') as ImageLoader;
 
         this.load.image('particle', imageLoader.getImageAsBase64('repo_wolf'));
         this.load.image('main_bg_1', imageLoader.getImageAsBase64('main_bg_1'));
         this.load.aseprite('test_sprite', imageLoader.getImageAsBase64('test_sprite'), imageLoader.getFetchedDataURL('test_sprite'));
-        
+
         const font = new FontFace('SilverFont', 'url(./game/asset/itch/font/Silver.ttf)');
         font.load().then(function (loadedFont) {
             document.fonts.add(loadedFont); // 폰트를 웹 폰트로 추가
@@ -85,7 +88,7 @@ export class GameScene extends Phaser.Scene {
 
     async create() {
 
- 
+
         const system = new tictactoeExtendsSpecialRules();
 
         const modelLoader = this.registry.get('modelLoader') as TicTacToeAI;
@@ -108,8 +111,6 @@ export class GameScene extends Phaser.Scene {
 
         const sceneGaming = () => {
             this.clearScene();
-
-            console.log(this.rexUI.add.sizer({}));
 
             //게임화면
             const gameScreenContainer = this.add.container(0, 0);
@@ -136,46 +137,146 @@ export class GameScene extends Phaser.Scene {
             const foregroundEffectContainer = this.add.container(0, 0); //전면 화면 효과
 
 
-
-            const layerContainer = this.add.container(0, 0);
             //컨테이너 그리드 
-            // const layerContainer = createLayerContainer(this, 'globalGrid', 0, 3, 3);
+            const gridSize = {
+                x: 24,
+                y: 24
+            };
+            const layerContainer = createLayerContainer(this, 'globalGrid', 0, gridSize.x, gridSize.y);
 
-            // const grid_TopPadding = this.add.graphics();
-            // const grid_BottomPadding = this.add.graphics();
 
-            // layerContainer.addToGrid(grid_TopPadding, 0, 0, {callbackRenderUpdate: (object: Phaser.GameObjects.Graphics) => {
-            //     //크기 구해서 랜더링 시 영역 갱신처리
+            const grid_TopPadding = this.add.graphics().setName('grid_TopPadding');
+            const grid_BottomPadding = this.add.graphics().setName('grid_BottomPadding');
+            const grid_LeftPadding = this.add.graphics().setName('grid_LeftPadding');
+            const grid_RightPadding = this.add.graphics().setName('grid_RightPadding');
+
+
+            const grid_gameSection = createLayerContainer(this, 'grid_inGameRect');
+            const grid_infoSection = createLayerContainer(this, 'grid_inGameInfo');
+
+            const grid_gameSectionRect = this.add.graphics().setName('grid_gameSectionRect');
+            const grid_infoSectionRect = this.add.graphics().setName('grid_infoSectionRect');
+
+ 
+
+            //상단 공백백
+            layerContainer.addToGrid(grid_TopPadding, 0, 0, {callbackRenderUpdate: (object: Phaser.GameObjects.Graphics) => {
+                const bounds = layerContainer.getCellBoundsByObject(object);
+                if (bounds !== null) {
+                    const w = bounds.topRight.x - bounds.topLeft.x;
+                    const h = bounds.bottomLeft.y - bounds.topLeft.y;
+
+                    object.clear();
+                    object.fillStyle(0xff00ff, 0.3);
+                    object.fillRect(bounds.topLeft.x, bounds.topLeft.y, w * gridSize.x, h);
+                };
+            }});
+
+            //하단 공백
+            layerContainer.addToGrid(grid_BottomPadding, 0, (gridSize.y - 1), {callbackRenderUpdate: (object: Phaser.GameObjects.Graphics) => {
+                const bounds = layerContainer.getCellBoundsByObject(object);
+                if (bounds !== null) {
+                    const w = bounds.topRight.x - bounds.topLeft.x;
+                    const h = bounds.bottomLeft.y - bounds.topLeft.y;
+
+                    object.clear();
+
+                    object.fillStyle(0xff00ff, 0.3);
+                    object.fillRect(bounds.topLeft.x, bounds.topLeft.y, w * gridSize.x, h);
+                };
+            }});
+
+            //좌측 공백
+            layerContainer.addToGrid(grid_LeftPadding, 0, 1, {callbackRenderUpdate: (object: Phaser.GameObjects.Graphics) => {
+                const bounds = layerContainer.getCellBoundsByObject(object);
+                if (bounds !== null) {
+                    const w = bounds.topRight.x - bounds.topLeft.x;
+                    const h = bounds.bottomLeft.y - bounds.topLeft.y;
+
+                    object.clear();
+
+                    object.fillStyle(0xff00ff, 0.2);
+                    object.fillRect(bounds.topLeft.x, bounds.topLeft.y, w, h * (gridSize.y - 2));
+                };
+            }});
+
+            //우측 공백
+            layerContainer.addToGrid(grid_RightPadding, (gridSize.x - 1), 1, {callbackRenderUpdate: (object: Phaser.GameObjects.Graphics) => {
+                const bounds = layerContainer.getCellBoundsByObject(object);
+                if (bounds !== null) {
+                    const w = bounds.topRight.x - bounds.topLeft.x;
+                    const h = bounds.bottomLeft.y - bounds.topLeft.y;
+
+                    object.clear();
+                    object.fillStyle(0xff00ff, 0.2);
+                    object.fillRect(bounds.topLeft.x, bounds.topLeft.y, w, h * (gridSize.y - 2));
+                };
+            }});
+
+
+            //게임 영역
+            layerContainer.addToGrid(grid_gameSection, 0, 1, { callbackHierarchicalCreate: (parentAny, selfAny) => {
+
+                const parent = parentAny as GridLayout;
+                const self = selfAny as GridLayout;
+                const bounds = parent.getCellBoundsByObject(self);
+                if (bounds == null) return;
+
+
+                const w = bounds.topRight.x - bounds.topLeft.x;
+                const h = bounds.bottomLeft.y - bounds.topLeft.y;
+
+                self.setX(bounds.topLeft.x);
+                self.setY(bounds.topLeft.y);
+                
+                self.setCallbackRenderUpdate(grid_gameSectionRect, (gameObject) => {                    
+                    const rect = gameObject as Phaser.GameObjects.Graphics;
+                    rect.clear();
+                    rect.fillStyle(0x00ff00, 0.1);
+                    rect.fillRect(bounds.topLeft.x, bounds.topLeft.y, calcGridPercent(w, gridSize.x, 40), h * (gridSize.y - 3));
+                });
+
+
+                self.layoutGrid();
+            }});
+
+            //정보 영역
+            // layerContainer.addToGrid(grid_infoSection, 1, 1, {callbackRenderUpdate: (object: GridLayout) => {
             //     const bounds = layerContainer.getCellBoundsByObject(object);
             //     if (bounds !== null) {
+
+            //         //게임 영역과 동일한 문제로 인해 체크
+                    
             //         const w = bounds.topRight.x - bounds.topLeft.x;
             //         const h = bounds.bottomLeft.y - bounds.topLeft.y;
+
+            //         //-1은 앞 영역의 계산만큼을 계산하기 위해
+            //         const nextXPos = bounds.topLeft.x + (calcGridPercent(w, gridSize.x , 40));
+
+            //         //-2는 다음 그리드기 때문
+            //         const nextWidth = (calcGridPercent(w, gridSize.x - 2 , 100) - calcGridPercent(w, gridSize.x , 40));
+
+            //         // object.fillStyle(0xff0000, 0.1);
+            //         // object.fillRect(nextXPos, bounds.topLeft.y, nextWidth, h * (gridSize.y - 2));
+            //         object.setX(nextXPos);
+            //         object.setY(bounds.topLeft.y);
+
+
                     
-            //         object.clear();
-            //         const randomColor = Phaser.Display.Color.RandomRGB();
-            //         object.fillStyle(randomColor.color, 0.1);
-            //         object.fillRect(bounds.topLeft.x, bounds.topLeft.y, w * 3, h);
             //     };
             // }});
-            // layerContainer.setGridSizeByObject(grid_TopPadding, {height: 20});
-
-            // layerContainer.addToGrid(grid_BottomPadding, 0, 2, {callbackRenderUpdate: (object: Phaser.GameObjects.Graphics) => {
-            //     //크기 구해서 랜더링 시 영역 갱신처리
-            //     const bounds = layerContainer.getCellBoundsByObject(object);
-            //     if (bounds !== null) {
-            //         const w = bounds.topRight.x - bounds.topLeft.x;
-            //         const h = bounds.bottomLeft.y - bounds.topLeft.y;
-                    
-            //         object.clear();
-            //         const randomColor = Phaser.Display.Color.RandomRGB();
-            //         object.fillStyle(randomColor.color, 0.1);
-            //         object.fillRect(bounds.topLeft.x, bounds.topLeft.y, w * 3, h);
-            //     };
-            // }});
-            // layerContainer.setGridSizeByObject(grid_BottomPadding, {height: 20});
 
 
-            // layerContainer.layoutGrid();
+            
+           //게임 영역에 그래픽 추가
+           grid_gameSection.addToGrid(grid_gameSectionRect, 0, 0);
+           grid_gameSection.layoutGrid();
+            
+
+
+            //그리드 레이아웃 위치 갱신
+            layerContainer.runHierarchicalEvent(grid_gameSection);
+            layerContainer.layoutGrid();
 
 
 
@@ -199,17 +300,18 @@ export class GameScene extends Phaser.Scene {
             ]);
 
             // 컨테이너 깊이 설정
-            backgroundContainer.setDepth(0);
-            gameContainer.setDepth(1);
-            scapeParticleContainer.setDepth(2);
-            tileParticleContainer.setDepth(3);
-            foregroundContainer.setDepth(4);
-            foregroundEffectContainer.setDepth(5);
-            uiGlobalTimerContainer.setDepth(6);
-            uiSlideTimerContainer.setDepth(7);
-            gameStartCountDownContainer.setDepth(8);
-            uiPauseContainer.setDepth(9);
-            layerContainer.setDepth(10);
+            layerContainer.setDepth(0);
+            backgroundContainer.setDepth(1);
+            gameContainer.setDepth(2);
+            scapeParticleContainer.setDepth(3);
+            tileParticleContainer.setDepth(4);
+            foregroundContainer.setDepth(5);
+            foregroundEffectContainer.setDepth(6);
+            uiGlobalTimerContainer.setDepth(7);
+            uiSlideTimerContainer.setDepth(8);
+            gameStartCountDownContainer.setDepth(9);
+            uiPauseContainer.setDepth(10);
+            
 
 
 
@@ -218,7 +320,7 @@ export class GameScene extends Phaser.Scene {
             // const pauseScreenContainer = this.add.container(0, 0);
 
 
-            
+
 
 
 
@@ -238,15 +340,15 @@ export class GameScene extends Phaser.Scene {
 
             system.gameStart(async (self) => {
                 this.gameStartInit(self);
-                
 
-                    const pre = await modelLoader.predict('4x4_4', {x: 4, y: 4}, [
-                        [0,0,0,0],
-                        [0,0,0,0],
-                        [0,0,1,0],
-                        [0,0,0,0],
-                    ]);
-                    console.log('AI Prediction:', pre);
+
+                const pre = await modelLoader.predict('4x4_4', { x: 4, y: 4 }, [
+                    [0, 0, 0, 0],
+                    [0, 0, 0, 0],
+                    [0, 0, 1, 0],
+                    [0, 0, 0, 0],
+                ]);
+                console.log('AI Prediction:', pre);
 
 
             });

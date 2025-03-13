@@ -13,6 +13,21 @@ Currently testing features.
 
 ## Development Notes
 
+### 2025-03-14
+
+GridLayout > GridLayout > Phaser.GameObjects.Graphic 이 있을 때
+GridLayout1 에서 addToGrid 메서드로 GridLayout2를 추가 할 때 callbackRenderUpdate 옵션을 통해서 
+GridLayout2.addToGrid(Phaser.GameObjects.Graphic) 을 하면 
+GridLayout1 에서 GridLayout2 에 대한 callbackRenderUpdate 콜백을 실행하지 않기 때문에 별도의 콜백 옵션을 통해서 하위 객체 생성을 시도해야 할 것. 
+
+그런 버그가 있어서 곤란해 곤란해~ 
+
+GridLayout는 Phaser.GameObjects.Container 을 extend 한 객체.
+기존의 Container 의 속성과 동작은 그대로 하지만 내부 시스템으로 비시각적인 Grid 영역 계산을 하며 이 좌표를 얻는 것이 가능.  
+UI 제작을 체계적으로 하기 위해서 해당 로직을 작성하고 있으며. 아직 성능적인 테스트는 뒷전. 
+기능적으로 더 만들어야 할 것이 더 많음.
+
+rexui 플러그인은 제가 생각하던 기능이 아니였던 것 같지만 설계상 호환되므로 유지하고 필요 시 의존하기로 함
 
 ### 2025-03-13
 
