@@ -21,7 +21,7 @@ This project is licensed under the MIT License.
 const pre = await modelLoader.predict('4x4_4', {x: 4, y: 4}, [
     [0,0,0,0],
     [0,0,0,0],
-    [0,0,1,0],
+    [0,0,0,0],
     [0,0,0,0],
 ]);
 console.log('AI Prediction:', pre);
