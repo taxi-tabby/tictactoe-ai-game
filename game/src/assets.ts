@@ -11,6 +11,7 @@ export default {
 
         { "key": "4x3", "path": "./game/asset/aimodel/tictactoe_model_4x3/model.json", "allow": true },
         { "key": "4x4", "path": "./game/asset/aimodel/tictactoe_model_4x4/model.json", "allow": true },
+        { "key": "4x4_4", "path": "./game/asset/aimodel/tictactoe_model_4x4_4/model.json", "allow": true },
         { "key": "4x5", "path": "./game/asset/aimodel/tictactoe_model_4x5/model.json", "allow": true },
         { "key": "4x6", "path": "./game/asset/aimodel/tictactoe_model_4x6/model.json", "allow": true },
         { "key": "4x7", "path": "./game/asset/aimodel/tictactoe_model_4x7/model.json", "allow": true },

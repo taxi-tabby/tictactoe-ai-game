@@ -239,13 +239,14 @@ export class GameScene extends Phaser.Scene {
             system.gameStart(async (self) => {
                 this.gameStartInit(self);
                 
-                    // const test = [
-                    //     [-1,0,0],
-                    //     [1,1,-1],
-                    //     [0,0,0]
-                    // ];
-                    // const pre = await modelLoader.predict('3x3', test);
-                    // console.log('AI Prediction:', pre);
+
+                    const pre = await modelLoader.predict('4x4_4', {x: 4, y: 4}, [
+                        [0,0,0,0],
+                        [0,0,0,0],
+                        [0,0,1,0],
+                        [0,0,0,0],
+                    ]);
+                    console.log('AI Prediction:', pre);
 
 
             });

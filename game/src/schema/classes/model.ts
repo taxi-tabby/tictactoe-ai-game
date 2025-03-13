@@ -20,7 +20,7 @@ export class TicTacToeAI {
 
     
     
-    public async predict(key: string, boardState: number[][]): Promise<number> {
+    public async predict(key: string, boardSize: {x: number, y: number}, boardState: number[][]): Promise<number> {
         const model = this.models.get(key);
         if (!model) {
             throw new Error(`Model with key ${key} not found`);
@@ -29,8 +29,8 @@ export class TicTacToeAI {
         // boardState를 1D 배열로 변환 (3x3 board -> 1D)
         const flatBoardState = boardState.flat();  // [1, 0, -1, 0, 1, 0, -1, 0, 1]
     
-        // 1D 배열을 4D 텐서로 변환
-        const input = tf.tensor4d(flatBoardState, [1, 3, 3, 1]);  // [1, 3, 3, 1] 형태로 텐서 생성
+        // 1D 배열을 4D 텐서로 변환 (cnn용)
+        const input = tf.tensor4d(flatBoardState, [1, boardSize.x, boardSize.y, 1]);  // [1, 3, 3, 1] 형태로 텐서 생성
     
         // 예측 실행
         const prediction = model.predict(input) as tf.Tensor;
