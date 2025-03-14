@@ -13,7 +13,52 @@ Currently testing features.
 
 ## Development Notes
 
-### 2025-03-14
+### 2025-03-14 (2)
+
+콜백 문제를 해결했음.
+이제 GridLayout > GridLayout | GridLayout[] 구성에서 최대 크기 계산과 하위 그리드 계산을 위해
+parentObject 를 하나 만들고 하위로 들어가는 객체에 상위 객체를 입력해 접근 가능하여 하여
+하위 객체가 상위 객체의 크기를 넘지 못하게 해야 함.
+GridLayout 가 undefined 인 객체는 최상위 객체가 되고 canvas의 전체 크기를 먹게 하는것임.
+하위 객체인 경우 상위 객체에 접근하여 크기 및 기능을 얻을 수 있음.
+크기를 조회하나느 동작의 메서드에 해당 개념을 적용하면 자동으로 모든 객체에 크기가 적용될 것임.
+
+그리고 보다 이쁘게 작성 가능하도록 콜백 활용했음 아래는 코드의 일부를 인용한 예시임.
+```typescript
+
+const globalContainer = createLayerContainer(this, 'c1', 0, gridSize.x, gridSize.y);
+const innerContainer = createLayerContainer(this, 'c2');
+
+
+/// globalContainer 안에 innerContainer 를 1,1 위치에 입력하므로 하위 컨테이너를 만듬.
+globalContainer.addToGrid(innerContainer, 1, 1, { callbackHierarchicalCreate: (parentAny, selfAny) => {
+
+    //상위 오브젝트
+    const parent = parentAny as GridLayout;
+
+    //상위에서 추가되는 오브젝트
+    const self = selfAny as GridLayout;
+
+    self.addToGrid({Phaser 게임 오브젝트}, 0, 0, {callbackRenderUpdate: (gameObject) => {
+        ...
+    }});
+    ...
+
+    //위치 업데이트
+    self.layoutGrid();
+}});
+
+
+//하위 컨터이너 생성 시작 (callbackHierarchicalCreate 콜백을 호출함.)
+//라이프 사이클 개념 확립 전 까진 수동 실행이 한계
+globalContainer.runHierarchicalEvent(innerContainer);
+
+//위치 업데이트
+globalContainer.layoutGrid();
+
+```
+
+### 2025-03-14 (1)
 
 GridLayout > GridLayout > Phaser.GameObjects.Graphic 이 있을 때
 GridLayout1 에서 addToGrid 메서드로 GridLayout2를 추가 할 때 callbackRenderUpdate 옵션을 통해서 

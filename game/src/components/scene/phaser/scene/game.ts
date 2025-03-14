@@ -142,26 +142,30 @@ export class GameScene extends Phaser.Scene {
                 x: 24,
                 y: 24
             };
-            const layerContainer = createLayerContainer(this, 'globalGrid', 0, gridSize.x, gridSize.y);
+
+            const layer_globalContainer = createLayerContainer(this, 'globalGridLayer', 0, gridSize.x, gridSize.y);
+            const layer_gameContainer = createLayerContainer(this, 'layer_gameContainer');
+            const layer_infoContainer = createLayerContainer(this, 'layer_infoContainer');
 
 
-            const grid_TopPadding = this.add.graphics().setName('grid_TopPadding');
-            const grid_BottomPadding = this.add.graphics().setName('grid_BottomPadding');
-            const grid_LeftPadding = this.add.graphics().setName('grid_LeftPadding');
-            const grid_RightPadding = this.add.graphics().setName('grid_RightPadding');
+            const grid_TopPadding = this.add.graphics().setName('graphic_TopPadding');
+            const grid_BottomPadding = this.add.graphics().setName('graphic_BottomPadding');
+            const grid_LeftPadding = this.add.graphics().setName('graphic_LeftPadding');
+            const grid_RightPadding = this.add.graphics().setName('graphic_RightPadding');
 
 
-            const grid_gameSection = createLayerContainer(this, 'grid_inGameRect');
-            const grid_infoSection = createLayerContainer(this, 'grid_inGameInfo');
 
-            const grid_gameSectionRect = this.add.graphics().setName('grid_gameSectionRect');
-            const grid_infoSectionRect = this.add.graphics().setName('grid_infoSectionRect');
+            const grid_gameSectionRect = this.add.graphics().setName('graphic_gameSectionRect');
+            const grid_gameBoardRect = this.add.graphics().setName('grid_gameBoardRect');
+
+
+            const grid_infoSectionRect = this.add.graphics().setName('graphic_infoSectionRect');
 
  
 
             //상단 공백백
-            layerContainer.addToGrid(grid_TopPadding, 0, 0, {callbackRenderUpdate: (object: Phaser.GameObjects.Graphics) => {
-                const bounds = layerContainer.getCellBoundsByObject(object);
+            layer_globalContainer.addToGrid(grid_TopPadding, 0, 0, {callbackRenderUpdate: (object: Phaser.GameObjects.Graphics) => {
+                const bounds = layer_globalContainer.getCellBoundsByObject(object);
                 if (bounds !== null) {
                     const w = bounds.topRight.x - bounds.topLeft.x;
                     const h = bounds.bottomLeft.y - bounds.topLeft.y;
@@ -173,8 +177,8 @@ export class GameScene extends Phaser.Scene {
             }});
 
             //하단 공백
-            layerContainer.addToGrid(grid_BottomPadding, 0, (gridSize.y - 1), {callbackRenderUpdate: (object: Phaser.GameObjects.Graphics) => {
-                const bounds = layerContainer.getCellBoundsByObject(object);
+            layer_globalContainer.addToGrid(grid_BottomPadding, 0, (gridSize.y - 1), {callbackRenderUpdate: (object: Phaser.GameObjects.Graphics) => {
+                const bounds = layer_globalContainer.getCellBoundsByObject(object);
                 if (bounds !== null) {
                     const w = bounds.topRight.x - bounds.topLeft.x;
                     const h = bounds.bottomLeft.y - bounds.topLeft.y;
@@ -187,8 +191,8 @@ export class GameScene extends Phaser.Scene {
             }});
 
             //좌측 공백
-            layerContainer.addToGrid(grid_LeftPadding, 0, 1, {callbackRenderUpdate: (object: Phaser.GameObjects.Graphics) => {
-                const bounds = layerContainer.getCellBoundsByObject(object);
+            layer_globalContainer.addToGrid(grid_LeftPadding, 0, 1, {callbackRenderUpdate: (object: Phaser.GameObjects.Graphics) => {
+                const bounds = layer_globalContainer.getCellBoundsByObject(object);
                 if (bounds !== null) {
                     const w = bounds.topRight.x - bounds.topLeft.x;
                     const h = bounds.bottomLeft.y - bounds.topLeft.y;
@@ -201,8 +205,8 @@ export class GameScene extends Phaser.Scene {
             }});
 
             //우측 공백
-            layerContainer.addToGrid(grid_RightPadding, (gridSize.x - 1), 1, {callbackRenderUpdate: (object: Phaser.GameObjects.Graphics) => {
-                const bounds = layerContainer.getCellBoundsByObject(object);
+            layer_globalContainer.addToGrid(grid_RightPadding, (gridSize.x - 1), 1, {callbackRenderUpdate: (object: Phaser.GameObjects.Graphics) => {
+                const bounds = layer_globalContainer.getCellBoundsByObject(object);
                 if (bounds !== null) {
                     const w = bounds.topRight.x - bounds.topLeft.x;
                     const h = bounds.bottomLeft.y - bounds.topLeft.y;
@@ -215,70 +219,89 @@ export class GameScene extends Phaser.Scene {
 
 
             //게임 영역
-            layerContainer.addToGrid(grid_gameSection, 0, 1, { callbackHierarchicalCreate: (parentAny, selfAny) => {
+            layer_globalContainer.addToGrid(layer_gameContainer, 1, 1, { callbackHierarchicalCreate: (parentAny, selfAny) => {
 
                 const parent = parentAny as GridLayout;
                 const self = selfAny as GridLayout;
                 const bounds = parent.getCellBoundsByObject(self);
                 if (bounds == null) return;
+                
+                console.log(parent.name, self.name)
 
+                // self.runHierarchicalEvent();
 
                 const w = bounds.topRight.x - bounds.topLeft.x;
                 const h = bounds.bottomLeft.y - bounds.topLeft.y;
 
-                self.setX(bounds.topLeft.x);
-                self.setY(bounds.topLeft.y);
-                
-                self.setCallbackRenderUpdate(grid_gameSectionRect, (gameObject) => {                    
+                //게임 영역을 표시하는 사각형
+                self.addToGrid(grid_gameSectionRect, 0, 0, {callbackRenderUpdate: (gameObject) => {
                     const rect = gameObject as Phaser.GameObjects.Graphics;
                     rect.clear();
-                    rect.fillStyle(0x00ff00, 0.1);
-                    rect.fillRect(bounds.topLeft.x, bounds.topLeft.y, calcGridPercent(w, gridSize.x, 40), h * (gridSize.y - 3));
-                });
+                    rect.fillStyle(0x00ff00, 0.5);
+                    rect.fillRect(bounds.topLeft.x, bounds.topLeft.y, calcGridPercent(w, gridSize.x, 40), h * (gridSize.y - 2));
+                }});
+
+                //게임 영역 안에서 게임 보드를 표시하는 사각형
+                self.addToGrid(grid_gameBoardRect, 1, 1, {callbackRenderUpdate: (gameObject) => {
+                    const rect = gameObject as Phaser.GameObjects.Graphics;
+                    const bounds = self.getCellBoundsByObject(rect);
+                    if (bounds == null) return;
+                    const w = bounds.topRight.x - bounds.topLeft.x;
+                    const h = bounds.bottomLeft.y - bounds.topLeft.y;
+                    rect.clear();
+                    rect.fillStyle(0xff0000, 0.6);
+                    rect.fillRect(bounds.topLeft.x, bounds.topLeft.y, w, h);
+                }});
 
 
                 self.layoutGrid();
             }});
 
             //정보 영역
-            // layerContainer.addToGrid(grid_infoSection, 1, 1, {callbackRenderUpdate: (object: GridLayout) => {
-            //     const bounds = layerContainer.getCellBoundsByObject(object);
-            //     if (bounds !== null) {
-
-            //         //게임 영역과 동일한 문제로 인해 체크
-                    
-            //         const w = bounds.topRight.x - bounds.topLeft.x;
-            //         const h = bounds.bottomLeft.y - bounds.topLeft.y;
-
-            //         //-1은 앞 영역의 계산만큼을 계산하기 위해
-            //         const nextXPos = bounds.topLeft.x + (calcGridPercent(w, gridSize.x , 40));
-
-            //         //-2는 다음 그리드기 때문
-            //         const nextWidth = (calcGridPercent(w, gridSize.x - 2 , 100) - calcGridPercent(w, gridSize.x , 40));
-
-            //         // object.fillStyle(0xff0000, 0.1);
-            //         // object.fillRect(nextXPos, bounds.topLeft.y, nextWidth, h * (gridSize.y - 2));
-            //         object.setX(nextXPos);
-            //         object.setY(bounds.topLeft.y);
+            layer_globalContainer.addToGrid(layer_infoContainer, 1, 1, {callbackHierarchicalCreate: (parentAny, selfAny) => {
+                const parent = parentAny as GridLayout;
+                const self = selfAny as GridLayout;
+                const bounds = parent.getCellBoundsByObject(self);
+                if (bounds == null) return;
 
 
-                    
-            //     };
-            // }});
+                
+
+                const w = bounds.topRight.x - bounds.topLeft.x;
+                const h = bounds.bottomLeft.y - bounds.topLeft.y;
 
 
+                self.addToGrid(grid_infoSectionRect, 0, 0, {callbackRenderUpdate: (gameObject) => {
+                    const rect = gameObject as Phaser.GameObjects.Graphics;
+
+                    //-1은 앞 영역의 계산만큼을 계산하기 위해
+                    const nextXPos = w + (calcGridPercent(w, gridSize.x - 1 , 40));
+
+                    //-2는 다음 그리드기 때문
+                    const nextWidth = (calcGridPercent(w, gridSize.x - 2 , 100) - calcGridPercent(w, gridSize.x , 40));
+
+
+                    rect.clear();
+                    rect.fillStyle(0xf5f0f0, 0.5);
+                    rect.fillRect(nextXPos, bounds.topLeft.y, nextWidth, h * (gridSize.y - 2));
+                }});
+
+
+                self.layoutGrid();
+            }});
+
+
+        
             
-           //게임 영역에 그래픽 추가
-           grid_gameSection.addToGrid(grid_gameSectionRect, 0, 0);
-           grid_gameSection.layoutGrid();
+
+
+
+            //하위 생성 이벤트
+            layer_globalContainer.runHierarchicalEvent(layer_gameContainer);
+            layer_globalContainer.runHierarchicalEvent(layer_infoContainer);
             
-
-
-            //그리드 레이아웃 위치 갱신
-            layerContainer.runHierarchicalEvent(grid_gameSection);
-            layerContainer.layoutGrid();
-
-
+            //위치 업데이트
+            layer_globalContainer.layoutGrid();
 
 
 
@@ -296,11 +319,11 @@ export class GameScene extends Phaser.Scene {
                 uiSlideTimerContainer,
                 uiPauseContainer,
                 gameStartCountDownContainer,
-                layerContainer,
+                layer_globalContainer,
             ]);
 
             // 컨테이너 깊이 설정
-            layerContainer.setDepth(0);
+            layer_globalContainer.setDepth(0);
             backgroundContainer.setDepth(1);
             gameContainer.setDepth(2);
             scapeParticleContainer.setDepth(3);
