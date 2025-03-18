@@ -1,15 +1,13 @@
-import { TictactoeGameStatus } from "../../../../schema/classes/tictactoe";
-import { tictactoeExtendsSpecialRules } from "../../../../schema/classes/tictactoeExtendsSpecialRules";
-import { TicTacToeAI } from '../../../../schema/classes/model';
-import { AudioManager } from '../../../../schema/classes/audio';
-import { ImageLoader } from '../../../../schema/classes/image';
-import { createTextButton } from "../helper/create/textButton";
-import { createAnimatedButton, createButton } from "../helper/create/button";
-import createLayerContainer, { GridLayout } from "../helper/create/layerContainer";
+import { TictactoeGameStatus } from "@local/schema/classes/tictactoe";
+import { tictactoeExtendsSpecialRules } from "@local/schema/classes/tictactoeExtendsSpecialRules";
+import { TicTacToeAI } from '@local/schema/classes/model';
+import { AudioManager } from '@local/schema/classes/audio';
+import { ImageLoader } from '@local/schema/classes/image';
+
+import { createTextButton } from "@local/game/helper/create/textButton";
+import { createAnimatedButton, createButton } from "@local/game/helper/create/button";
+import createLayerContainer, { GridLayout } from "@local/game/helper/create/layerContainer";
 import { model } from "@tensorflow/tfjs";
-import RexUIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin.js';
-import { calcGridPercent } from "../../../../schema/classes/math";
-import { fillTargetColorToAnotherColor, vertexShader } from "../helper/shader/shader.color.fill";
 
 
 
