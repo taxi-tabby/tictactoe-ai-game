@@ -5,13 +5,24 @@ import { motion } from 'framer-motion';
 import Phaser, { Game } from "phaser";
 import RexUIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin.js';
 
-import MonitorComponent from '@local/components/component/monitorComponent';
-import { EmptyScene } from '@local/game/scene/empty';
-import { MainScene } from '@local/game/scene/main';
-import { GameScene } from '@local/game/scene/game';
-import { TicTacToeAI } from '@local/schema/classes/model';
-import { AudioManager } from '@local/schema/classes/audio';
-import { ImageLoader } from '@local/schema/classes/image';
+
+//xxxxx
+import MonitorComponent from '../../components/component/monitorComponent';
+
+
+//xxxxx
+// import { EmptyScene } from '@local/game/scene/empty';
+// import { MainScene } from '@local/game/scene/main';
+// import { GameScene } from '@local/game/scene/game';
+
+import { EmptyScene } from '../../phaser/scene/empty';
+import { MainScene } from '../../phaser/scene/main';
+import { GameScene } from '../../phaser/scene/game';
+
+
+import { TicTacToeAI } from '@/schema/classes/model';
+import { AudioManager } from '@/schema/classes/audio';
+import { ImageLoader } from '@/schema/classes/image';
 
 
 

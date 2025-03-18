@@ -74,6 +74,20 @@ export default {
         
         {
             "sprite": true,
+            "key": "board_border_score",
+            "path": "./game/asset/image/tiles/board_score.png",
+            "sprite_json": "./game/asset/image/tiles/board_score.json"
+        },
+
+        {
+            "sprite": true,
+            "key": "board_border_log",
+            "path": "./game/asset/image/tiles/board_log.png",
+            "sprite_json": "./game/asset/image/tiles/board_log.json"
+        },
+
+        {
+            "sprite": true,
             "key": "board_border",
             "path": "./game/asset/image/tiles/board.png",
             "sprite_json": "./game/asset/image/tiles/board.json"

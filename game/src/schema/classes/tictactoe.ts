@@ -127,72 +127,139 @@ class tictactoeGameBehavior extends BoardGame {
     }
 
     // tic tac toe 게임에서의 승자를 확인하는 메서드
-    public checkWinner(): {value: TictactoeGameStatus | TileValue, type: 'status' | 'tile'} {
+    public checkWinner(): { value: TictactoeGameStatus | TileValue, type: 'status' | 'tile', pattern?: [number, number][] } {
         const boardSize = { rows: this.board.value.length, cols: this.board.value[0].length };
-
         const winLength = this.getWinLength();
-
-        const winPatterns = [];
+        const winPatterns: [number, number][][] = []; // Ensure winPatterns is an array of tuple arrays
+    
         // 가로 승리 패턴 생성
         for (let r = 0; r < boardSize.rows; r++) {
             for (let c = 0; c <= boardSize.cols - winLength; c++) {
-                const pattern = [];
+                const pattern: [number, number][] = []; // Ensure pattern is an array of tuples
                 for (let i = 0; i < winLength; i++) {
                     pattern.push([r, c + i]);
                 }
                 winPatterns.push(pattern);
             }
         }
-
+    
         // 세로 승리 패턴 생성
         for (let c = 0; c < boardSize.cols; c++) {
             for (let r = 0; r <= boardSize.rows - winLength; r++) {
-                const pattern = [];
+                const pattern: [number, number][] = []; // Ensure pattern is an array of tuples
                 for (let i = 0; i < winLength; i++) {
                     pattern.push([r + i, c]);
                 }
                 winPatterns.push(pattern);
             }
         }
-
+    
         // 대각선 (왼쪽 위에서 오른쪽 아래) 승리 패턴 생성
         for (let r = 0; r <= boardSize.rows - winLength; r++) {
             for (let c = 0; c <= boardSize.cols - winLength; c++) {
-                const pattern = [];
+                const pattern: [number, number][] = []; // Ensure pattern is an array of tuples
                 for (let i = 0; i < winLength; i++) {
                     pattern.push([r + i, c + i]);
                 }
                 winPatterns.push(pattern);
             }
         }
-
+    
         // 대각선 (왼쪽 아래에서 오른쪽 위) 승리 패턴 생성
         for (let r = winLength - 1; r < boardSize.rows; r++) {
             for (let c = 0; c <= boardSize.cols - winLength; c++) {
-                const pattern = [];
+                const pattern: [number, number][] = []; // Ensure pattern is an array of tuples
                 for (let i = 0; i < winLength; i++) {
                     pattern.push([r - i, c + i]);
                 }
                 winPatterns.push(pattern);
             }
         }
-
+    
         // 승리 패턴 확인
         for (let pattern of winPatterns) {
             const [a, b, c] = pattern;
             if (this.board.value[a[0]][a[1]] && pattern.every(([x, y]) => this.board.value[x][y] === this.board.value[a[0]][a[1]])) {
-                return {type: 'tile', value: this.board.value[a[0]][a[1]]};
+                return { type: 'tile', value: this.board.value[a[0]][a[1]], pattern }; // 승리 시 패턴 포함
             }
         }
-
+    
         // 무승부 확인
         const isDraw = this.board.value.every(row => row.every(cell => cell !== this.tile('EMPTY')));
         if (isDraw) {
-            return {type: 'status', value: TictactoeGameStatus.DRAW}; // 무승부
+            return { type: 'status', value: TictactoeGameStatus.DRAW }; // 무승부
         }
-
-        return {type: 'status', value: TictactoeGameStatus.PLAYING}; // 게임 중
+    
+        return { type: 'status', value: TictactoeGameStatus.PLAYING }; // 게임 중
     }
+    
+    
+    // public checkWinner(): {value: TictactoeGameStatus | TileValue, type: 'status' | 'tile'} {
+    //     const boardSize = { rows: this.board.value.length, cols: this.board.value[0].length };
+
+    //     const winLength = this.getWinLength();
+
+    //     const winPatterns = [];
+    //     // 가로 승리 패턴 생성
+    //     for (let r = 0; r < boardSize.rows; r++) {
+    //         for (let c = 0; c <= boardSize.cols - winLength; c++) {
+    //             const pattern = [];
+    //             for (let i = 0; i < winLength; i++) {
+    //                 pattern.push([r, c + i]);
+    //             }
+    //             winPatterns.push(pattern);
+    //         }
+    //     }
+
+    //     // 세로 승리 패턴 생성
+    //     for (let c = 0; c < boardSize.cols; c++) {
+    //         for (let r = 0; r <= boardSize.rows - winLength; r++) {
+    //             const pattern = [];
+    //             for (let i = 0; i < winLength; i++) {
+    //                 pattern.push([r + i, c]);
+    //             }
+    //             winPatterns.push(pattern);
+    //         }
+    //     }
+
+    //     // 대각선 (왼쪽 위에서 오른쪽 아래) 승리 패턴 생성
+    //     for (let r = 0; r <= boardSize.rows - winLength; r++) {
+    //         for (let c = 0; c <= boardSize.cols - winLength; c++) {
+    //             const pattern = [];
+    //             for (let i = 0; i < winLength; i++) {
+    //                 pattern.push([r + i, c + i]);
+    //             }
+    //             winPatterns.push(pattern);
+    //         }
+    //     }
+
+    //     // 대각선 (왼쪽 아래에서 오른쪽 위) 승리 패턴 생성
+    //     for (let r = winLength - 1; r < boardSize.rows; r++) {
+    //         for (let c = 0; c <= boardSize.cols - winLength; c++) {
+    //             const pattern = [];
+    //             for (let i = 0; i < winLength; i++) {
+    //                 pattern.push([r - i, c + i]);
+    //             }
+    //             winPatterns.push(pattern);
+    //         }
+    //     }
+
+    //     // 승리 패턴 확인
+    //     for (let pattern of winPatterns) {
+    //         const [a, b, c] = pattern;
+    //         if (this.board.value[a[0]][a[1]] && pattern.every(([x, y]) => this.board.value[x][y] === this.board.value[a[0]][a[1]])) {
+    //             return {type: 'tile', value: this.board.value[a[0]][a[1]]};
+    //         }
+    //     }
+
+    //     // 무승부 확인
+    //     const isDraw = this.board.value.every(row => row.every(cell => cell !== this.tile('EMPTY')));
+    //     if (isDraw) {
+    //         return {type: 'status', value: TictactoeGameStatus.DRAW}; // 무승부
+    //     }
+
+    //     return {type: 'status', value: TictactoeGameStatus.PLAYING}; // 게임 중
+    // }
 
     /**
      * 승리 조건 길이

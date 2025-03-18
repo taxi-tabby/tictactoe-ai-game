@@ -15,11 +15,10 @@ export default {
      * - primaryVariant: 기본 색상 변형
      * - secondaryVariant: 보조 색상 변형
      */
-    primary: '#02343F',
-    secondary: '#F0EDCC',
-    primaryVariant: '#1A6373',
-    secondaryVariant: '#BDB98E',
-
+    primary: '#6D8C8F',  // Pastel Teal (a lighter tone of #02343F)
+    secondary: '#F1E2B3',  // Pastel Light Yellow (a softer version of #F0EDCC)
+    primaryVariant: '#6A8F91',  // Pastel Teal Variant (a lighter version of #1A6373)
+    secondaryVariant: '#D1D18F',  // Pastel Olive (a softer variant of #BDB98E)
 
     /**
      * Background color
@@ -29,10 +28,10 @@ export default {
      */
     background: {
         main: [
-            '#02343F'
+            '#6D8C8F'  // Pastel Teal (a lighter tone of #02343F)
         ],
         game: [
-            '#02343F'
+            '#6D8C8F'  // Pastel Teal (a lighter tone of #02343F)
         ]
     },
 
@@ -45,12 +44,9 @@ export default {
      * - success: 성공용
      */
     default: {
-        error: '#B00020',
-        warning: '##F28705',
-        point: '#F2CB05',
-        success: '#267365'
+        error: '#F0A0A0',  // Pastel Red (a softer version of #B00020)
+        warning: '#F2B24D',  // Pastel Yellow-Orange (a lighter version of #F28705)
+        point: '#F5D255',  // Pastel Yellow (a soft version of #F2CB05)
+        success: '#7BAA8A'  // Pastel Green (a lighter version of #267365)
     }
-    
-    
-
 }

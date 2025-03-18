@@ -1,9 +1,11 @@
 type ColorFormat = {
     hex: string;
+    hexa: string;
     rgb: { r: number; g: number; b: number };
     rgba: { r: number; g: number; b: number; a: number };
     vec3: [number, number, number];
     vec4: [number, number, number, number];
+    int: number;
 };
 
 function parseColor(color: string): ColorFormat {
@@ -28,12 +30,18 @@ function parseColor(color: string): ColorFormat {
         throw new Error('Invalid color format');
     }
 
+    const hexString = `#${hex.length === 6 ? hex : hex.slice(0, 6)}`;
+    const hexaString = `#${hex}`;
+    const intColor = parseInt(hex, 16);
+
     return {
-        hex: `#${hex}`,
+        hex: hexString,
+        hexa: hexaString,
         rgb: { r, g, b },
         rgba: { r, g, b, a },
         vec3: [r / 255, g / 255, b / 255],
         vec4: [r / 255, g / 255, b / 255, a / 255],
+        int: intColor,
     };
 }
 

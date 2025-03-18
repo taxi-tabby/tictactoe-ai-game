@@ -15,23 +15,21 @@
 		"noFallthroughCasesInSwitch": true,
 		"module": "esnext",
 		"moduleResolution": "node",
+		// "moduleResolution": "bundler",
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"noEmit": true,
 		"jsx": "react-jsx",
+		
 		"baseUrl": ".",
 		"paths": {
-			"*": [
-				"src/*",
-				"node_modules/*"
-			],
-			"@local/*": ["src/*"],
-			"@local/game/scene/*": ["src/components/scene/phaser/scene/*"],
-			"@local/game/helper/*": ["src/components/scene/phaser/helper/*"],
-			"@local/schema/*": ["src/schema/*"],
-			"@local/game/config/asset": ["src/game-assets-config.ts"],
-			"@local/game/config/color": ["src/game-color-config.ts"],
+			"@/*": ["src/*"],
+			"@local-schema/*": ["src/schema/*"],
+			"@local-config/assets": ["src/game-assets-config.ts"],
+			"@local-config/color": ["src/game-color-config.ts"],
+			// "@local-game": ["src/components/scene/phaser/*"],
 		}
+
 	},
 	"include": [
 		"src/**/*"

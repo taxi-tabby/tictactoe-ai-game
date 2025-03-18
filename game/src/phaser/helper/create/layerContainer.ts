@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { calcValueFromPercent } from '../../../../../schema/classes/math';
+import { calcValueFromPercent } from '../../../schema/classes/math';
 
 type specifiedGridSizePos = { row: number, col: number };
 type specifiedGridSizeData = { width?: number, height?: number };
@@ -854,9 +854,8 @@ class GridLayout extends Phaser.GameObjects.Container {
         this.specifiedGridSize = [];
     }
 
-    getCellBoundsByObject(gameObject: acceptableObject, spacing: boolean = false) {
-        const objectAt = this.getObjectAt(gameObject);
-        if (!objectAt) return null;
+
+    getCellBoundsByPos(row: number, col: number, spacing: boolean = false) {
 
         const cell = this.getCellSize();
         const screen = this.getScreenSize();
@@ -868,18 +867,18 @@ class GridLayout extends Phaser.GameObjects.Container {
         let cellHeight = 0;
 
         // 지정된 그리드 사이즈를 바탕으로 위치 계산
-        for (let c = 0; c <= objectAt.col; c++) {
-            const specifiedSize = this.getSpecifiedGridSize({ pos: { row: objectAt.row, col: c } });
+        for (let c = 0; c <= col; c++) {
+            const specifiedSize = this.getSpecifiedGridSize({ pos: { row: row, col: c } });
             cellWidth = specifiedSize?.size?.width ?? cell.width;
 
-            if (c < objectAt.col) newX += cellWidth;
+            if (c < col) newX += cellWidth;
         }
 
-        for (let r = 0; r <= objectAt.row; r++) {
-            const specifiedSize = this.getSpecifiedGridSize({ pos: { row: r, col: objectAt.col } });
+        for (let r = 0; r <= row; r++) {
+            const specifiedSize = this.getSpecifiedGridSize({ pos: { row: r, col: col } });
             cellHeight = specifiedSize?.size?.height ?? cell.height;
 
-            if (r < objectAt.row) newY += cellHeight;
+            if (r < row) newY += cellHeight;
         }
 
         // 좌표가 화면을 넘지 않도록 제한
@@ -892,6 +891,13 @@ class GridLayout extends Phaser.GameObjects.Container {
             bottomLeft: { x: newX, y: newY + cellHeight - spacingValue },
             bottomRight: { x: newX + cellWidth - spacingValue, y: newY + cellHeight - spacingValue },
         };
+    }
+
+    getCellBoundsByObject(gameObject: acceptableObject, spacing: boolean = false) {
+        const objectAt = this.getObjectAt(gameObject);
+        if (!objectAt) return null;
+
+        return this.getCellBoundsByPos(objectAt.row, objectAt.col, spacing);
     }
     
 
