@@ -61,6 +61,8 @@ export default {
 
     ],
 
+
+    //__sppx__
     "images": [
         {
             "sprite": true,
@@ -68,6 +70,23 @@ export default {
             "path": "./game/asset/itch/wastenospace_theme/gui_assets/art/gui_sheet_64x64__sppx__.png",
             "sprite_json": "./game/asset/itch/wastenospace_theme/gui_assets/art/gui_sheet_64x64.json"
         },
+
+        
+        {
+            "sprite": true,
+            "key": "board_border",
+            "path": "./game/asset/image/tiles/board.png",
+            "sprite_json": "./game/asset/image/tiles/board.json"
+        },
+
+        {
+            "sprite": true,
+            "key": "xo_sprite",
+            "path": "./game/asset/image/tiles/xo_animation.png",
+            "sprite_json": "./game/asset/image/tiles/xo_animation.json"
+        },
+        
+        
         {
             "key": "repo_wolf",
             "path": "./game/asset/image/repo_wolf.png"

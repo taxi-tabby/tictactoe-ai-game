@@ -106,4 +106,13 @@ export class ImageLoader {
         if (!blob) return undefined;
         return URL.createObjectURL(blob);
     }
+
+    /**
+     * Blob 데이터를 Object URL로 변환하여 반환
+     */
+    async getFetchedDataInRaw(key: string){
+        const blob = this.fetchedData.get(key);
+        return await blob?.text();
+    }
+
 }

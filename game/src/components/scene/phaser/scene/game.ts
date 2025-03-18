@@ -4,11 +4,14 @@ import { TicTacToeAI } from '../../../../schema/classes/model';
 import { AudioManager } from '../../../../schema/classes/audio';
 import { ImageLoader } from '../../../../schema/classes/image';
 import { createTextButton } from "../helper/create/textButton";
-import { createButton } from "../helper/create/button";
+import { createAnimatedButton, createButton } from "../helper/create/button";
 import createLayerContainer, { GridLayout } from "../helper/create/layerContainer";
 import { model } from "@tensorflow/tfjs";
 import RexUIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin.js';
 import { calcGridPercent } from "../../../../schema/classes/math";
+import { fillTargetColorToAnotherColor, vertexShader } from "../helper/shader/shader.color.fill";
+
+
 
 export class GameScene extends Phaser.Scene {
 
@@ -44,7 +47,9 @@ export class GameScene extends Phaser.Scene {
             self.setCurrentPlayer(whoPlayFirst);
 
             //게임 보드 초기는 3x3으로 시작
-            self.setBoardSize(3, 3);
+            const randomSize1 = Phaser.Math.Between(3, 9);
+            const randomSize2 = Phaser.Math.Between(3, 9);
+            self.setBoardSize(randomSize1, randomSize2);
 
             //출력ㅌxxx
             this.showGameConfigToConsole(self);
@@ -65,7 +70,7 @@ export class GameScene extends Phaser.Scene {
     }
 
 
-    preload() {
+    async preload() {
         console.clear();
 
         const audioLoader = this.registry.get('audioLoader');
@@ -75,42 +80,72 @@ export class GameScene extends Phaser.Scene {
         this.load.image('main_bg_1', imageLoader.getImageAsBase64('main_bg_1'));
         this.load.aseprite('test_sprite', imageLoader.getImageAsBase64('test_sprite'), imageLoader.getFetchedDataURL('test_sprite'));
 
-        const font = new FontFace('SilverFont', 'url(./game/asset/itch/font/Silver.ttf)');
-        font.load().then(function (loadedFont) {
-            document.fonts.add(loadedFont); // 폰트를 웹 폰트로 추가
-            console.log('폰트 로드 완료!');
-        }).catch(function (error) {
-            console.error('폰트 로딩 실패:', error);
-        });
+        this.load.aseprite('board_border', imageLoader.getImageAsBase64('board_border'), imageLoader.getFetchedDataURL('board_border'));
+
+        // xo_sprite
+        // const xo_sprite_json = await imageLoader.getFetchedDataInRaw('xo_sprite');
+        this.load.aseprite('xo_sprite', imageLoader.getImageAsBase64('xo_sprite'), imageLoader.getFetchedDataURL('xo_sprite'));
+
+
 
 
     }
 
     async create() {
 
-
+   
         const system = new tictactoeExtendsSpecialRules();
 
         const modelLoader = this.registry.get('modelLoader') as TicTacToeAI;
 
+        // const t = this.textures.get('board_border');
+        // const render = new Phaser.Display.BaseShader('Test', fillTargetColorToAnotherColor, vertexShader);
+        // const shader = this.add.shader(render, 0, 0, 600, 500, [t.key]);
+        // shader.setRenderToTexture();
+
+        this.anims.create({
+            key: 'O_ANIMATION', 
+            frames: this.anims.generateFrameNames('xo_sprite', { 
+                start: 0, 
+                end: 4,  
+                prefix: 'xo_animation (O_ANIMATION) ', 
+                suffix: '.aseprite' 
+            }),
+            frameRate: 10, 
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'X_ANIMATION', 
+            frames: this.anims.generateFrameNames('xo_sprite', { 
+                start: 0, 
+                end: 4,  
+                prefix: 'xo_animation (X_ANIMATION) ', 
+                suffix: '.aseprite' 
+            }),
+            frameRate: 10, 
+            repeat: -1
+        });
+
+
 
         const sceneGameDone = () => {
-            this.clearScene();
-            this.add.text(10, 10, 'Game Over', {
-                fontSize: '32px',
-                color: '000'
-            });
-            const restartButton = this.add.text(10, 50, 'Restart Game', {
-                fontSize: '32px',
-                color: '#ff0000'
-            }).setInteractive({ useHandCursor: true });
-            restartButton.on('pointerdown', () => {
-                sceneGaming();
-            });
+            // this.clearScene();
+            // this.add.text(10, 10, 'Game Over', {
+            //     fontSize: '32px',
+            //     color: '000'
+            // });
+            // const restartButton = this.add.text(10, 50, 'Restart Game', {
+            //     fontSize: '32px',
+            //     color: '#ff0000'
+            // }).setInteractive({ useHandCursor: true });
+            // restartButton.on('pointerdown', () => {
+            //     sceneGaming();
+            // });
         }
 
-        const sceneGaming = () => {
-            this.clearScene();
+        const sceneGaming = async () => {
+            // this.clearScene();
 
             //게임화면
             const gameScreenContainer = this.add.container(0, 0);
@@ -137,174 +172,38 @@ export class GameScene extends Phaser.Scene {
             const foregroundEffectContainer = this.add.container(0, 0); //전면 화면 효과
 
 
-            //컨테이너 그리드 
-            const gridSize = {
-                x: 24,
-                y: 24
-            };
+            //게임 보드
 
-            const layer_globalContainer = createLayerContainer(this, 'globalGridLayer', 0, gridSize.x, gridSize.y);
-            const layer_gameContainer = createLayerContainer(this, 'layer_gameContainer');
-            const layer_infoContainer = createLayerContainer(this, 'layer_infoContainer');
+            const layer_gameBoard = createLayerContainer(this, 'layer_globalContainer', {w: 400, h: 500}, 0, 3, 3);
 
 
-            const grid_TopPadding = this.add.graphics().setName('graphic_TopPadding');
-            const grid_BottomPadding = this.add.graphics().setName('graphic_BottomPadding');
-            const grid_LeftPadding = this.add.graphics().setName('graphic_LeftPadding');
-            const grid_RightPadding = this.add.graphics().setName('graphic_RightPadding');
+            const layer_boardBorder = this.add.sprite(0, 0, 'board_border').setOrigin(0, 0).setTintFill(0xfafafa).setAlpha(0.6);
 
-
-
-            const grid_gameSectionRect = this.add.graphics().setName('graphic_gameSectionRect');
-            const grid_gameBoardRect = this.add.graphics().setName('grid_gameBoardRect');
-
-
-            const grid_infoSectionRect = this.add.graphics().setName('graphic_infoSectionRect');
-
- 
-
-            //상단 공백백
-            layer_globalContainer.addToGrid(grid_TopPadding, 0, 0, {callbackRenderUpdate: (object: Phaser.GameObjects.Graphics) => {
-                const bounds = layer_globalContainer.getCellBoundsByObject(object);
-                if (bounds !== null) {
-                    const w = bounds.topRight.x - bounds.topLeft.x;
-                    const h = bounds.bottomLeft.y - bounds.topLeft.y;
-
-                    object.clear();
-                    object.fillStyle(0xff00ff, 0.3);
-                    object.fillRect(bounds.topLeft.x, bounds.topLeft.y, w * gridSize.x, h);
-                };
-            }});
-
-            //하단 공백
-            layer_globalContainer.addToGrid(grid_BottomPadding, 0, (gridSize.y - 1), {callbackRenderUpdate: (object: Phaser.GameObjects.Graphics) => {
-                const bounds = layer_globalContainer.getCellBoundsByObject(object);
-                if (bounds !== null) {
-                    const w = bounds.topRight.x - bounds.topLeft.x;
-                    const h = bounds.bottomLeft.y - bounds.topLeft.y;
-
-                    object.clear();
-
-                    object.fillStyle(0xff00ff, 0.3);
-                    object.fillRect(bounds.topLeft.x, bounds.topLeft.y, w * gridSize.x, h);
-                };
-            }});
-
-            //좌측 공백
-            layer_globalContainer.addToGrid(grid_LeftPadding, 0, 1, {callbackRenderUpdate: (object: Phaser.GameObjects.Graphics) => {
-                const bounds = layer_globalContainer.getCellBoundsByObject(object);
-                if (bounds !== null) {
-                    const w = bounds.topRight.x - bounds.topLeft.x;
-                    const h = bounds.bottomLeft.y - bounds.topLeft.y;
-
-                    object.clear();
-
-                    object.fillStyle(0xff00ff, 0.2);
-                    object.fillRect(bounds.topLeft.x, bounds.topLeft.y, w, h * (gridSize.y - 2));
-                };
-            }});
-
-            //우측 공백
-            layer_globalContainer.addToGrid(grid_RightPadding, (gridSize.x - 1), 1, {callbackRenderUpdate: (object: Phaser.GameObjects.Graphics) => {
-                const bounds = layer_globalContainer.getCellBoundsByObject(object);
-                if (bounds !== null) {
-                    const w = bounds.topRight.x - bounds.topLeft.x;
-                    const h = bounds.bottomLeft.y - bounds.topLeft.y;
-
-                    object.clear();
-                    object.fillStyle(0xff00ff, 0.2);
-                    object.fillRect(bounds.topLeft.x, bounds.topLeft.y, w, h * (gridSize.y - 2));
-                };
-            }});
-
-
-            //게임 영역
-            layer_globalContainer.addToGrid(layer_gameContainer, 1, 1, { callbackHierarchicalCreate: (parentAny, selfAny) => {
-
-                const parent = parentAny as GridLayout;
-                const self = selfAny as GridLayout;
-                const bounds = parent.getCellBoundsByObject(self);
-                if (bounds == null) return;
-                
-                console.log(parent.name, self.name)
-
-                // self.runHierarchicalEvent();
-
-                const w = bounds.topRight.x - bounds.topLeft.x;
-                const h = bounds.bottomLeft.y - bounds.topLeft.y;
-
-                //게임 영역을 표시하는 사각형
-                self.addToGrid(grid_gameSectionRect, 0, 0, {callbackRenderUpdate: (gameObject) => {
-                    const rect = gameObject as Phaser.GameObjects.Graphics;
-                    rect.clear();
-                    rect.fillStyle(0x00ff00, 0.5);
-                    rect.fillRect(bounds.topLeft.x, bounds.topLeft.y, calcGridPercent(w, gridSize.x, 40), h * (gridSize.y - 2));
-                }});
-
-                //게임 영역 안에서 게임 보드를 표시하는 사각형
-                self.addToGrid(grid_gameBoardRect, 1, 1, {callbackRenderUpdate: (gameObject) => {
-                    const rect = gameObject as Phaser.GameObjects.Graphics;
-                    const bounds = self.getCellBoundsByObject(rect);
-                    if (bounds == null) return;
-                    const w = bounds.topRight.x - bounds.topLeft.x;
-                    const h = bounds.bottomLeft.y - bounds.topLeft.y;
-                    rect.clear();
-                    rect.fillStyle(0xff0000, 0.6);
-                    rect.fillRect(bounds.topLeft.x, bounds.topLeft.y, w, h);
-                }});
-
-
-                self.layoutGrid();
-            }});
-
-            //정보 영역
-            layer_globalContainer.addToGrid(layer_infoContainer, 1, 1, {callbackHierarchicalCreate: (parentAny, selfAny) => {
-                const parent = parentAny as GridLayout;
-                const self = selfAny as GridLayout;
-                const bounds = parent.getCellBoundsByObject(self);
-                if (bounds == null) return;
-
-
-                
-
-                const w = bounds.topRight.x - bounds.topLeft.x;
-                const h = bounds.bottomLeft.y - bounds.topLeft.y;
-
-
-                self.addToGrid(grid_infoSectionRect, 0, 0, {callbackRenderUpdate: (gameObject) => {
-                    const rect = gameObject as Phaser.GameObjects.Graphics;
-
-                    //-1은 앞 영역의 계산만큼을 계산하기 위해
-                    const nextXPos = w + (calcGridPercent(w, gridSize.x - 1 , 40));
-
-                    //-2는 다음 그리드기 때문
-                    const nextWidth = (calcGridPercent(w, gridSize.x - 2 , 100) - calcGridPercent(w, gridSize.x , 40));
-
-
-                    rect.clear();
-                    rect.fillStyle(0xf5f0f0, 0.5);
-                    rect.fillRect(nextXPos, bounds.topLeft.y, nextWidth, h * (gridSize.y - 2));
-                }});
-
-
-                self.layoutGrid();
-            }});
-
-
-        
             
+            // const btn_test = createTextButton(this, 0, 0, 'Test Button', () => {}, {font: '50px Silverfont', color: '#fafafa'}).setOrigin(0, 0);
 
 
 
-            //하위 생성 이벤트
-            layer_globalContainer.runHierarchicalEvent(layer_gameContainer);
-            layer_globalContainer.runHierarchicalEvent(layer_infoContainer);
-            
-            //위치 업데이트
-            layer_globalContainer.layoutGrid();
+            // 레이어들을 게임 컨테이너에 추가
+            gameContainer.add([layer_gameBoard, layer_boardBorder]);
+            layer_boardBorder.setDepth(0);
+            layer_gameBoard.setDepth(1);
+            gameContainer.sort('depth');
 
+  
 
-
+            // 컨테이너 깊이 설정
+            // layer_gameBoard.setDepth(0);
+            backgroundContainer.setDepth(1);
+            gameContainer.setDepth(2);
+            scapeParticleContainer.setDepth(3);
+            tileParticleContainer.setDepth(4);
+            foregroundContainer.setDepth(5);
+            foregroundEffectContainer.setDepth(6);
+            uiGlobalTimerContainer.setDepth(7);
+            uiSlideTimerContainer.setDepth(8);
+            gameStartCountDownContainer.setDepth(9);
+            uiPauseContainer.setDepth(10);
 
 
             //서브컨테이너로 넣기
@@ -319,21 +218,14 @@ export class GameScene extends Phaser.Scene {
                 uiSlideTimerContainer,
                 uiPauseContainer,
                 gameStartCountDownContainer,
-                layer_globalContainer,
+                // layer_gameBoard,
             ]);
 
-            // 컨테이너 깊이 설정
-            layer_globalContainer.setDepth(0);
-            backgroundContainer.setDepth(1);
-            gameContainer.setDepth(2);
-            scapeParticleContainer.setDepth(3);
-            tileParticleContainer.setDepth(4);
-            foregroundContainer.setDepth(5);
-            foregroundEffectContainer.setDepth(6);
-            uiGlobalTimerContainer.setDepth(7);
-            uiSlideTimerContainer.setDepth(8);
-            gameStartCountDownContainer.setDepth(9);
-            uiPauseContainer.setDepth(10);
+            gameScreenContainer.sort('depth');
+
+
+            //위치 설정
+            gameContainer.setPosition(50, 50);
             
 
 
@@ -343,26 +235,48 @@ export class GameScene extends Phaser.Scene {
             // const pauseScreenContainer = this.add.container(0, 0);
 
 
-
-
-
-
-            // const move = self.makeMove(y, x);
-            // if (!move.moved) {
-            //     console.log(`${move.reason}`);
-            //     return;
-            // }
-            // const check = self.checkWinner();
-            // if (check.type === 'tile') {
-            //     console.log(`Winner: ${check.value}`);
-            //     return;
-            // } else if (check.type === 'status' && check.value === TictactoeGameStatus.DRAW) {
-            //     console.log(`Draw!`);
-            //     return;
-            // }
-
             system.gameStart(async (self) => {
+
                 this.gameStartInit(self);
+
+                layer_gameBoard.clearAllObjects();
+
+                system.getBoard().forEach((row, y) => {
+                    row.forEach((tile, x) => {
+
+                        const btn = createAnimatedButton(this, 0, 0, 'O_ANIMATION', 'X_ANIMATION', () => {
+                            console.log('Click:', x, y);
+                        }).setOrigin(0.5 , 0.5);
+
+
+                        // const btn = createTextButton(this, 0, 0, '', () => {}, {
+                        //     font: '50px Silver',
+                        //     color: '#fafafa',
+                        //     backgroundColor: 'rgba(255, 0, 0, 0.35)',
+                        //     align: 'center',
+                        // });
+
+
+                        layer_gameBoard.addToGrid(btn, x, y, {
+                            callbackRenderUpdate: (object) => {
+                                const btnBuff: Phaser.GameObjects.Sprite = object;
+                                const bounds = layer_gameBoard.getCellBoundsByObject(btnBuff);
+                                if (bounds === null) return;
+                                const w = Math.floor(bounds.topRight.x - bounds.topLeft.x);
+                                const h = Math.floor(bounds.bottomLeft.y - bounds.topLeft.y);
+                                // btnBuff.setText(`${tile.toString()}`);
+                                btnBuff.setPosition(bounds.topLeft.x + (w / 2), bounds.topLeft.y + (h / 2));
+                            }
+                        });
+                    });
+                });
+
+
+                //위치 업데이트
+                layer_gameBoard.layoutGrid();
+
+
+
 
 
                 const pre = await modelLoader.predict('4x4_4', { x: 4, y: 4 }, [
@@ -380,8 +294,9 @@ export class GameScene extends Phaser.Scene {
 
 
 
-        //최초에는 게임 진행
-        sceneGaming();
+        //화면을 랜더링 함
+        await sceneGameDone();
+        await sceneGaming();
     }
 
     update() {

@@ -1,26 +1,39 @@
 {
-  "compilerOptions": {
-    "target": "es5",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx"
-  },
-  "include": [
-    "src",
-  ]
+	"compilerOptions": {
+		"target": "es5",
+		"lib": [
+			"dom",
+			"dom.iterable",
+			"esnext"
+		],
+		"allowJs": true,
+		"skipLibCheck": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"strict": true,
+		"forceConsistentCasingInFileNames": true,
+		"noFallthroughCasesInSwitch": true,
+		"module": "esnext",
+		"moduleResolution": "node",
+		"resolveJsonModule": true,
+		"isolatedModules": true,
+		"noEmit": true,
+		"jsx": "react-jsx",
+		"baseUrl": ".",
+		"paths": {
+			"*": [
+				"src/*",
+				"node_modules/*"
+			],
+			"@local/*": ["src/*"],
+			"@local/game/scene/*": ["src/components/scene/phaser/scene/*"],
+			"@local/game/helper/*": ["src/components/scene/phaser/helper/*"],
+			"@local/schema/*": ["src/schema/*"],
+			"@local/game/config/asset": ["src/game-assets-config.ts"],
+			"@local/game/config/color": ["src/game-color-config.ts"],
+		}
+	},
+	"include": [
+		"src/**/*"
+	]
 }

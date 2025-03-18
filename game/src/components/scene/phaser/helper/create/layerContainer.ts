@@ -1,9 +1,18 @@
 import Phaser from 'phaser';
+import { calcValueFromPercent } from '../../../../../schema/classes/math';
 
 type specifiedGridSizePos = { row: number, col: number };
 type specifiedGridSizeData = { width?: number, height?: number };
 type specifiedGridSize = { pos: specifiedGridSizePos, size?: specifiedGridSizeData };
 
+type objectPosition = { x: number, y: number }; 
+type objectSize = { w?: number | string, h?: number | string }; 
+
+interface objectCoordinates {
+    position?: objectPosition;
+    size?: objectSize;
+    wasSet: boolean;
+}
 
 type containerObject = GridLayout | Phaser.GameObjects.Container;
 type gameObject = Phaser.GameObjects.GameObject | Phaser.GameObjects.Graphics | Phaser.GameObjects.Text | Phaser.GameObjects.Image | Phaser.GameObjects.Sprite;
@@ -32,7 +41,10 @@ type addObjectOption = {
     callbackHierarchicalCreate?: gameContainerObjectHandler
  };
 
-// GridLayout 클래스: Phaser.GameObjects.Container를 확장하여 동적 그리드를 관리
+/**
+ * GridLayout class: Extends Phaser.GameObjects.Container to manage a dynamic grid
+ * - Allows adding GameObjects or Containers within the grid and specifying their positions
+ */
 class GridLayout extends Phaser.GameObjects.Container {
     private rows: number;
     private columns: number;
@@ -52,17 +64,26 @@ class GridLayout extends Phaser.GameObjects.Container {
     private hierarchicalCreateEventGrid: (gameContainerObjectHandler[])[][];
 
     //상위 오브젝트
-    private parentObject: containerObject | undefined;
+    // private parentObject: containerObject | undefined;
+
+    private objectAt: objectCoordinates | undefined;
 
     //callbackHierarchicalCreate
 
-    constructor(scene: Phaser.Scene, rows: number = 0, columns: number = 0, spacing: number = 0) {
+    constructor(scene: Phaser.Scene, rows: number = 0, columns: number = 0, size?: objectSize, spacing: number = 0) {
         super(scene, 0, 0);
         this.rows = rows;
         this.columns = columns;
         this.spacing = spacing;
         this.specifiedGridSize = [];
+        this.objectAt = {wasSet: false};
+
+        if (size) {
+            this.objectAt.size = size;
+            this.objectAt.wasSet = true;
+        } 
         
+
 
         // 그리드를 2D 배열로 초기화
         this.grid = Array.from({ length: rows }, () => Array(columns).fill(null));
@@ -72,7 +93,7 @@ class GridLayout extends Phaser.GameObjects.Container {
     }
 
     // 그리드에 GameObject 또는 Container 추가
-    addToGrid(gameObject: acceptableObject, x: number, y: number, options: addObjectOption = {}) {
+    async addToGrid(gameObject: acceptableObject, x: number, y: number, options: addObjectOption = {}): Promise<void> {
         
 
         // 그리드 크기 확장 체크
@@ -90,7 +111,20 @@ class GridLayout extends Phaser.GameObjects.Container {
         }
 
 
-        this.parentObject = gameObject;
+        // parentContainer 라는 객체가 이미 Container 에 존재함.
+        // this.parentObject = gameObject;
+
+        //대신 해딩 오브젝트의 위치를 수동으로 저장함. objectAt 메서드를 통해 검사하면 더 리소스가 나오겠지..
+
+        if (this.objectAt != undefined && this.objectAt.wasSet == true) {
+            this.objectAt.position = {x, y};
+        } else {
+            this.objectAt = {position: {x, y}, wasSet: false};
+        }
+
+        this.shrinkGridIfNecessary();
+
+        return Promise.resolve();
     }
 
 
@@ -320,7 +354,12 @@ class GridLayout extends Phaser.GameObjects.Container {
 
                     if (options.callbackHierarchicalCreate !== undefined) {
                         const index = arrContainer.indexOf(container);
-                        this.hierarchicalCreateEventGrid[row][col] = [...this.hierarchicalCreateEventGrid[row][col]];
+                        if (this.hierarchicalCreateEventGrid[row][col] == undefined) {
+                            this.hierarchicalCreateEventGrid[row][col] = Array(index + 1).fill(undefined);
+                        } else {
+                            this.hierarchicalCreateEventGrid[row][col] = [...this.hierarchicalCreateEventGrid[row][col]];
+                        }
+
                         this.hierarchicalCreateEventGrid[row][col][index] = options.callbackHierarchicalCreate;
                     }
 
@@ -462,18 +501,17 @@ class GridLayout extends Phaser.GameObjects.Container {
     private expandGrid(x: number, y: number) {
         const requiredRows = y + 1; // 최소 y+1 만큼의 행이 필요
         const requiredCols = x + 1; // 최소 x+1 만큼의 열이 필요
-
+    
         // 그리드 크기가 필요 이상이면 확장
         if (requiredRows > this.rows) {
             for (let i = this.rows; i < requiredRows; i++) {
                 this.grid.push(Array(this.columns).fill(null)); // 새로운 행 추가
                 this.renderUpdateEventGrid.push(Array(this.columns).fill(undefined));
                 this.hierarchicalCreateEventGrid.push(Array(this.columns).fill(undefined));
-                
             }
             this.rows = requiredRows;
         }
-
+    
         if (requiredCols > this.columns) {
             for (let i = 0; i < this.rows; i++) {
                 this.grid[i].length = requiredCols; // 각 행에 열을 추가
@@ -482,7 +520,70 @@ class GridLayout extends Phaser.GameObjects.Container {
             }
             this.columns = requiredCols;
         }
+        
+
     }
+
+    private shrinkGridIfNecessary() {
+        // 마지막 유효한 행을 찾기
+        let lastValidRow = this.rows - 1;
+        while (lastValidRow >= 0 && this.grid[lastValidRow].every(cell => cell === null)) {
+            lastValidRow--; // 행을 하나씩 줄여서 유효한 마지막 행을 찾음
+        }
+    
+        // 유효한 마지막 행이 있다면
+        if (lastValidRow < this.rows - 1) {
+            // 그리드 크기 축소: 유효한 마지막 행 이후의 행 삭제
+            this.grid.length = lastValidRow + 1;
+            this.renderUpdateEventGrid.length = lastValidRow + 1;
+            this.hierarchicalCreateEventGrid.length = lastValidRow + 1;
+            this.rows = lastValidRow + 1;
+        }
+    
+        // 마지막 유효한 열을 찾기
+        let lastValidCol = this.columns - 1;
+        while (lastValidCol >= 0 && this.grid.every(row => row[lastValidCol] === null)) {
+            lastValidCol--; // 열을 하나씩 줄여서 유효한 마지막 열을 찾음
+        }
+    
+        // 유효한 마지막 열이 있다면
+        if (lastValidCol < this.columns - 1) {
+            // 각 행의 열 크기를 축소: 유효한 마지막 열 이후의 열 삭제
+            for (let i = 0; i < this.rows; i++) {
+                this.grid[i].length = lastValidCol + 1;
+                this.renderUpdateEventGrid[i].length = lastValidCol + 1;
+                this.hierarchicalCreateEventGrid[i].length = lastValidCol + 1;
+            }
+            this.columns = lastValidCol + 1;
+        }
+    }
+    
+    
+    
+    // private expandGrid(x: number, y: number) {
+    //     const requiredRows = y + 1; // 최소 y+1 만큼의 행이 필요
+    //     const requiredCols = x + 1; // 최소 x+1 만큼의 열이 필요
+
+    //     // 그리드 크기가 필요 이상이면 확장
+    //     if (requiredRows > this.rows) {
+    //         for (let i = this.rows; i < requiredRows; i++) {
+    //             this.grid.push(Array(this.columns).fill(null)); // 새로운 행 추가
+    //             this.renderUpdateEventGrid.push(Array(this.columns).fill(undefined));
+    //             this.hierarchicalCreateEventGrid.push(Array(this.columns).fill(undefined));
+                
+    //         }
+    //         this.rows = requiredRows;
+    //     }
+
+    //     if (requiredCols > this.columns) {
+    //         for (let i = 0; i < this.rows; i++) {
+    //             this.grid[i].length = requiredCols; // 각 행에 열을 추가
+    //             this.renderUpdateEventGrid[i].length = requiredCols;
+    //             this.hierarchicalCreateEventGrid[i].length = requiredCols;
+    //         }
+    //         this.columns = requiredCols;
+    //     }
+    // }
 
 
     private getObjectAt(gameObject: acceptableObject): { row: number, col: number, object: callbackRenderUpdateObject, objectAll?: callbackRenderUpdateObject | callbackRenderUpdateObject[] } | undefined {
@@ -647,15 +748,16 @@ class GridLayout extends Phaser.GameObjects.Container {
         let cellWidth = 0;
         let cellHeight = 0;
     
+        const screen = this.getScreenSize();
+    
+
         // If col > 0, calculate the cellWidth for columns before the current one.
 
         for (let c = 0; c < col; c++) {
-            if (c === 0) {
-                cellWidth = 0;
-            } else {
+
                 const specifiedSize = this.getSpecifiedGridSize({ pos: { row, col: c } });
-                cellWidth = specifiedSize?.size?.width ?? (this.getScreenSize().width / this.columns);
-            }
+                cellWidth = specifiedSize?.size?.width ?? (screen.width / this.columns);
+            
             newX += cellWidth;
         }
     
@@ -664,12 +766,10 @@ class GridLayout extends Phaser.GameObjects.Container {
 
         for (let r = 0; r < row; r++) {
             
-            if (r === 0) {
-                cellHeight = 0;
-            } else {
+
                 const specifiedSize = this.getSpecifiedGridSize({ pos: { row: r, col } });
-                cellHeight = specifiedSize?.size?.height ?? (this.getScreenSize().height / this.rows);
-            }
+                cellHeight = specifiedSize?.size?.height ?? (screen.height / this.rows);
+            
             newY += cellHeight;
         }
         
@@ -695,99 +795,187 @@ class GridLayout extends Phaser.GameObjects.Container {
 
     
     // 특정 GameObject나 Container가 속한 그리드 셀의 절대 좌표와 크기를 얻는 메서드
-    getSizeOfObject(gameObject: Phaser.GameObjects.GameObject, spacing: boolean = false) {
-        const objectAt = this.getObjectAt(gameObject);
-        if (!objectAt) return null;
+    // getSizeOfObject(gameObject: acceptableObject, spacing: boolean = false) {
+    //     const objectAt = this.getObjectAt(gameObject);
+    //     if (!objectAt) return null;
     
-        let newX = 0;
-        let newY = 0;
-        let cellWidth = 0;
-        let cellHeight = 0;
+    //     let newX = 0;
+    //     let newY = 0;
+    //     let cellWidth = 0;
+    //     let cellHeight = 0;
     
-        for (let c = 0; c <= objectAt.col; c++) {
-            const specifiedSize = this.getSpecifiedGridSize({ pos: { row: objectAt.row, col: c } });
-            cellWidth = specifiedSize?.size?.width ?? (screen.width / this.rows);
-            if (c < objectAt.col) newX += cellWidth;
-        }
-    
-        for (let r = 0; r <= objectAt.row; r++) {
-            const specifiedSize = this.getSpecifiedGridSize({ pos: { row: r, col: objectAt.col } });
-            cellHeight = specifiedSize?.size?.height ?? (screen.height / this.rows);
-            if (r < objectAt.row) newY += cellHeight;
-        }
+    //     const screen = this.getScreenSize();
     
 
-        return {
-            objectAt: objectAt,
-            x: newX + (spacing ? this.spacing : 0),
-            y: newY + (spacing ? this.spacing : 0),
-            w: cellWidth - (spacing ? this.spacing : 0),
-            h: cellHeight - (spacing ? this.spacing : 0),
-        };
+    //     for (let c = 0; c <= objectAt.col; c++) {
+    //         const specifiedSize = this.getSpecifiedGridSize({ pos: { row: objectAt.row, col: c } });
+    //         cellWidth = specifiedSize?.size?.width ?? (screen.width / this.columns);
+    //         if (c < objectAt.col) newX += cellWidth;
+    //     }
+    
+    //     for (let r = 0; r <= objectAt.row; r++) {
+    //         const specifiedSize = this.getSpecifiedGridSize({ pos: { row: r, col: objectAt.col } });
+    //         cellHeight = specifiedSize?.size?.height ?? (screen.height / this.rows);
+    //         if (r < objectAt.row) newY += cellHeight;
+    //     }
+    
+
+    //     return {
+    //         objectAt: objectAt,
+    //         x: newX + (spacing ? this.spacing : 0),
+    //         y: newY + (spacing ? this.spacing : 0),
+    //         w: cellWidth - (spacing ? this.spacing : 0),
+    //         h: cellHeight - (spacing ? this.spacing : 0),
+    //     };
+    // }
+    
+    /**
+     * 그리드 내 모든 객체를 제거하는 메서드
+     */
+    clearAllObjects() {
+        this.grid.forEach((row, rowIndex) => {
+            row.forEach((gameObject, colIndex) => {
+                if (gameObject != null) {
+                    if (Array.isArray(gameObject)) {
+                        gameObject.forEach((obj) => {
+                            if (obj instanceof Phaser.GameObjects.GameObject) {
+                                obj.destroy();
+                            }
+                        });
+                    } else if (gameObject instanceof Phaser.GameObjects.GameObject) {
+                        gameObject.destroy();
+                    }
+                    this.grid[rowIndex][colIndex] = null;
+                    this.renderUpdateEventGrid[rowIndex][colIndex] = [];
+                    this.hierarchicalCreateEventGrid[rowIndex][colIndex] = [];
+                }
+            });
+        });
+        this.specifiedGridSize = [];
     }
-    
 
-    getCellBoundsByObject(gameObject: Phaser.GameObjects.GameObject, spacing: boolean = false) {
+    getCellBoundsByObject(gameObject: acceptableObject, spacing: boolean = false) {
         const objectAt = this.getObjectAt(gameObject);
         if (!objectAt) return null;
 
         const cell = this.getCellSize();
+        const screen = this.getScreenSize();
+        const spacingValue = (spacing ? this.spacing : 0);
 
         let newX = 0;
         let newY = 0;
         let cellWidth = 0;
         let cellHeight = 0;
-    
+
+        // 지정된 그리드 사이즈를 바탕으로 위치 계산
         for (let c = 0; c <= objectAt.col; c++) {
             const specifiedSize = this.getSpecifiedGridSize({ pos: { row: objectAt.row, col: c } });
             cellWidth = specifiedSize?.size?.width ?? cell.width;
+
             if (c < objectAt.col) newX += cellWidth;
         }
-    
+
         for (let r = 0; r <= objectAt.row; r++) {
             const specifiedSize = this.getSpecifiedGridSize({ pos: { row: r, col: objectAt.col } });
             cellHeight = specifiedSize?.size?.height ?? cell.height;
+
             if (r < objectAt.row) newY += cellHeight;
         }
-    
+
+        // 좌표가 화면을 넘지 않도록 제한
+        newX = Math.min(newX + spacingValue, screen.width - cellWidth);
+        newY = Math.min(newY + spacingValue, screen.height - cellHeight);
+
         return {
-            topLeft: { x: newX + (spacing ? this.spacing : 0), y: newY + (spacing ? this.spacing : 0) },
-            topRight: { x: newX + cellWidth - (spacing ? this.spacing : 0), y: newY + (spacing ? this.spacing : 0) },
-            bottomLeft: { x: newX + (spacing ? this.spacing : 0), y: newY + cellHeight - (spacing ? this.spacing : 0) },
-            bottomRight: { x: newX + cellWidth - (spacing ? this.spacing : 0), y: newY + cellHeight - (spacing ? this.spacing : 0) },
+            topLeft: { x: newX, y: newY },
+            topRight: { x: newX + cellWidth - spacingValue, y: newY },
+            bottomLeft: { x: newX, y: newY + cellHeight - spacingValue },
+            bottomRight: { x: newX + cellWidth - spacingValue, y: newY + cellHeight - spacingValue },
         };
     }
+    
 
     // 각 그리드 셀의 좌상, 우상, 좌하, 우하 절대값 계산
-    getCellBoundsByPos(row: number, col: number, spacing: boolean = false) {
-        let newX = 0;
-        let newY = 0;
-        let cellWidth = 0;
-        let cellHeight = 0;
+    // getCellBoundsByPos(row: number, col: number, spacing: boolean = false) {
+    //     let newX = 0;
+    //     let newY = 0;
+    //     let cellWidth = 0;
+    //     let cellHeight = 0;
+
+    //     const screen = this.getScreenSize();
     
-        for (let c = 0; c <= col; c++) {
-            const specifiedSize = this.getSpecifiedGridSize({ pos: { row, col: c } });
-            cellWidth = specifiedSize?.size?.width ?? (screen.width / this.rows);
-            if (c < col) newX += cellWidth;
+    //     for (let c = 0; c <= col; c++) {
+    //         const specifiedSize = this.getSpecifiedGridSize({ pos: { row, col: c } });
+    //         cellWidth = specifiedSize?.size?.width ?? (screen.width / this.rows);
+    //         if (c < col) newX += cellWidth;
+    //     }
+    
+    //     for (let r = 0; r <= row; r++) {
+    //         const specifiedSize = this.getSpecifiedGridSize({ pos: { row: r, col } });
+    //         cellHeight = specifiedSize?.size?.height ?? (screen.height / this.rows);
+    //         if (r < row) newY += cellHeight;
+    //     }
+    
+    //     return {
+    //         topLeft: { x: newX + (spacing ? this.spacing : 0), y: newY + (spacing ? this.spacing : 0) },
+    //         topRight: { x: newX + cellWidth - (spacing ? this.spacing : 0), y: newY + (spacing ? this.spacing : 0) },
+    //         bottomLeft: { x: newX + (spacing ? this.spacing : 0), y: newY + cellHeight - (spacing ? this.spacing : 0) },
+    //         bottomRight: { x: newX + cellWidth - (spacing ? this.spacing : 0), y: newY + cellHeight - (spacing ? this.spacing : 0) },
+    //     };
+    // }
+    
+    private stringPercentageParser(value: string | number): {value: number, isPercentage: boolean} {
+        if (typeof value === 'string') {
+            const isPercentage = value.includes('%');
+            const parsedValue = parseFloat(value);
+            return { value: parsedValue, isPercentage };
+        } else {
+            return { value: value, isPercentage: false };
         }
-    
-        for (let r = 0; r <= row; r++) {
-            const specifiedSize = this.getSpecifiedGridSize({ pos: { row: r, col } });
-            cellHeight = specifiedSize?.size?.height ?? (screen.height / this.rows);
-            if (r < row) newY += cellHeight;
-        }
-    
-        return {
-            topLeft: { x: newX + (spacing ? this.spacing : 0), y: newY + (spacing ? this.spacing : 0) },
-            topRight: { x: newX + cellWidth - (spacing ? this.spacing : 0), y: newY + (spacing ? this.spacing : 0) },
-            bottomLeft: { x: newX + (spacing ? this.spacing : 0), y: newY + cellHeight - (spacing ? this.spacing : 0) },
-            bottomRight: { x: newX + cellWidth - (spacing ? this.spacing : 0), y: newY + cellHeight - (spacing ? this.spacing : 0) },
-        };
     }
-    
-    private getScreenSize() {
-        const { width: screenWidth, height: screenHeight } = this.scene.scale;
-        return { width: screenWidth, height: screenHeight };
+
+    private getScreenSize(): {width: number, height: number} {
+
+        //console.log(`p: ${this.parentContainer ? this.parentContainer.name : 'none' } / c: ${this ? this.name : 'none'}`);
+
+        const parent = (this.parentContainer instanceof GridLayout) ? this.parentContainer : undefined;
+        const objectAt = this.objectAt;
+
+
+        if (parent === undefined) {
+
+            const { width: screenWidth, height: screenHeight } = this.scene.scale;
+
+            if (objectAt != undefined && objectAt.wasSet == true && objectAt.size !== undefined) {
+                const widthValue = this.stringPercentageParser((objectAt.size.w ? objectAt.size.w : screenWidth));
+                const heightValue = this.stringPercentageParser((objectAt.size.h ? objectAt.size.h : screenHeight));
+
+                return { width: (widthValue.isPercentage ? (calcValueFromPercent(screenWidth, widthValue.value)) : widthValue.value), height: (heightValue.isPercentage ? (calcValueFromPercent(screenHeight, heightValue.value)) : heightValue.value) };
+            }
+
+            
+            return { width: screenWidth, height: screenHeight };
+            
+        } else {
+
+            const parentSize = parent.getScreenSize();
+
+            if (objectAt != undefined && objectAt.wasSet == true && objectAt.size !== undefined) {
+                
+                const widthValue = this.stringPercentageParser((objectAt.size.w ? objectAt.size.w : parentSize.width));
+                const heightValue = this.stringPercentageParser((objectAt.size.h ? objectAt.size.h : parentSize.height));
+
+                return { width: (widthValue.isPercentage ? (calcValueFromPercent(parentSize.width, widthValue.value)) : widthValue.value), height: (heightValue.isPercentage ? (calcValueFromPercent(parentSize.height, heightValue.value)) : heightValue.value) };
+            } else {
+                return { width: parentSize.width, height: parentSize.height };
+            }
+
+ 
+        }
+
+
+        // this.parent
+
     }
 
 
@@ -832,6 +1020,7 @@ class GridLayout extends Phaser.GameObjects.Container {
 
     private getSpecifiedGridSize(data: specifiedGridSize) {
         const existingIndex = this.specifiedGridSize.findIndex(grid => grid.pos.row === data.pos.row && grid.pos.col === data.pos.col);
+        // console.log(data.pos, existingIndex, this.specifiedGridSize.length);
         if (existingIndex !== -1) {
             return this.specifiedGridSize[existingIndex];
         } else {
@@ -854,8 +1043,12 @@ class GridLayout extends Phaser.GameObjects.Container {
      */
     setGridSizeByObject(gameObject: Phaser.GameObjects.GameObject, data?: specifiedGridSizeData) {
         const objectAt = this.getObjectAt(gameObject);
-        if (objectAt !== undefined)
+        if (objectAt !== undefined) {
             this.setSpecifiedGridSize({pos: {col: objectAt.col, row: objectAt.row}, size: data});
+        } else {
+            throw new Error("The specified gameObject is not found in the grid.");
+        }
+
     }
 
     getGrid() {
@@ -866,9 +1059,18 @@ class GridLayout extends Phaser.GameObjects.Container {
 
 export type { GridLayout };
 
-// 레이어 컨테이너 생성 함수
-export default function createLayerContainer(scene: Phaser.Scene, layerName: string, spacing?: number, initX?: number, initY?: number): GridLayout {
-    const layerContainer = new GridLayout(scene, initY, initX,spacing); // GridLayout으로 확장된 컨테이너 생성
+/**
+ * 레이어 컨테이너를 생성합니다.
+ * @param scene 
+ * @param layerName 
+ * @param size 
+ * @param spacing 
+ * @param initX 
+ * @param initY 
+ * @returns 
+ */
+export default function createLayerContainer(scene: Phaser.Scene, layerName: string, size?: objectSize, spacing?: number, initX?: number, initY?: number): GridLayout {
+    const layerContainer = new GridLayout(scene, initY, initX, size, spacing); // GridLayout으로 확장된 컨테이너 생성
     layerContainer.name = layerName;
     return layerContainer;
 }
