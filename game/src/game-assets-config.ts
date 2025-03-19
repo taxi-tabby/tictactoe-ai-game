@@ -1,7 +1,7 @@
 export default {
 
     "aimodel": [
-        { "key": "3x3", "path": "./game/asset/aimodel/tictactoe_model_3x3/model.json", "allow": false },
+        { "key": "3x3", "path": "./game/asset/aimodel/tictactoe_model_3x3/model.json", "allow": true },
         { "key": "3x4", "path": "./game/asset/aimodel/tictactoe_model_3x4/model.json", "allow": false },
         { "key": "3x5", "path": "./game/asset/aimodel/tictactoe_model_3x5/model.json", "allow": false },
         { "key": "3x6", "path": "./game/asset/aimodel/tictactoe_model_3x6/model.json", "allow": false },
@@ -10,7 +10,7 @@ export default {
         { "key": "3x9", "path": "./game/asset/aimodel/tictactoe_model_3x9/model.json", "allow": false },
 
         { "key": "4x3", "path": "./game/asset/aimodel/tictactoe_model_4x3/model.json", "allow": false },
-        { "key": "4x4", "path": "./game/asset/aimodel/tictactoe_model_4x4/model.json", "allow": false },
+        { "key": "4x4", "path": "./game/asset/aimodel/tictactoe_model_4x4/model.json", "allow": true },
         { "key": "4x4_4", "path": "./game/asset/aimodel/tictactoe_model_4x4_4/model.json", "allow": true },
         { "key": "4x5", "path": "./game/asset/aimodel/tictactoe_model_4x5/model.json", "allow": false },
         { "key": "4x6", "path": "./game/asset/aimodel/tictactoe_model_4x6/model.json", "allow": false },

@@ -881,6 +881,10 @@ class GridLayout extends Phaser.GameObjects.Container {
             if (r < row) newY += cellHeight;
         }
 
+        // 부모 객체의 위치를 고려
+        // const parentX = this.parentContainer?.x ?? 0;
+        // const parentY = this.parentContainer?.y ?? 0;
+
         // 좌표가 화면을 넘지 않도록 제한
         newX = Math.min(newX + spacingValue, screen.width - cellWidth);
         newY = Math.min(newY + spacingValue, screen.height - cellHeight);
