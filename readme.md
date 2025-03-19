@@ -13,6 +13,96 @@ Currently testing features.
 
 ## Development Notes
 
+### 2025-03-19 (1)
+
+하.. 일단 4x4_4 중심으로 개발하는데 성능이 구려서 큰일이네 분명 5천개 샘플로 학습해서 그런가 대충 수학적으로 게임 보드가 43,046,721 개가 필요하다고 하는데 너무 부족해서 그런가
+
+성능 최대한 채울려고 다차원으로 깊이 2차원 만큼 테스트 코드 돌렸는데도 뭔가 이상함.. 흠흠...
+
+여기서 일단 빌드해서 다른 디바이스로 체크.
+
+### 2025-03-17 (2)
+
+Phaser Container 에서 depth 가 갱신되지 않는 문제가 있었는데.
+Container 객체의 sort 메서드에서 해결 가능했음. 따로 자료를 못 찾아서 시간이 조금 들어감.
+
+```typescript
+const containerObject: Phaser.GameObjects.GameObject;
+containerObject.sort('depth'); // 다음 메서드를 호출해서 랜더링 뒤 바뀐 depth를 갱신 가능함.
+``` 
+
+
+
+### 2025-03-17 (1)
+
+![에셋1](./에셋_XO_ANIMATION1.gif) 
+
+에셋 그리기 하는데 잘 그릴 방법이 없어서 그냥 꼬물딱 꼬물딱 애니메이션으로 추출. 추출한대로 잘 그려지는지 랜더링 테스트를 해야 함.
+
+
+
+
+
+### 2025-03-14 (2)
+
+콜백 문제를 해결했음.
+이제 GridLayout > GridLayout | GridLayout[] 구성에서 최대 크기 계산과 하위 그리드 계산을 위해
+parentObject 를 하나 만들고 하위로 들어가는 객체에 상위 객체를 입력해 접근 가능하여 하여
+하위 객체가 상위 객체의 크기를 넘지 못하게 해야 함.
+GridLayout 가 undefined 인 객체는 최상위 객체가 되고 canvas의 전체 크기를 먹게 하는것임.
+하위 객체인 경우 상위 객체에 접근하여 크기 및 기능을 얻을 수 있음.
+크기를 조회하나느 동작의 메서드에 해당 개념을 적용하면 자동으로 모든 객체에 크기가 적용될 것임.
+
+그리고 보다 이쁘게 작성 가능하도록 콜백 활용했음 아래는 코드의 일부를 인용한 예시임.
+```typescript
+
+const globalContainer = createLayerContainer(this, 'c1', 0, gridSize.x, gridSize.y);
+const innerContainer = createLayerContainer(this, 'c2');
+
+
+/// globalContainer 안에 innerContainer 를 1,1 위치에 입력하므로 하위 컨테이너를 만듬.
+globalContainer.addToGrid(innerContainer, 1, 1, { callbackHierarchicalCreate: (parentAny, selfAny) => {
+
+    //상위 오브젝트
+    const parent = parentAny as GridLayout;
+
+    //상위에서 추가되는 오브젝트
+    const self = selfAny as GridLayout;
+
+    self.addToGrid({Phaser 게임 오브젝트}, 0, 0, {callbackRenderUpdate: (gameObject) => {
+        ...
+    }});
+    ...
+
+    //위치 업데이트
+    self.layoutGrid();
+}});
+
+
+//하위 컨터이너 생성 시작 (callbackHierarchicalCreate 콜백을 호출함.)
+//라이프 사이클 개념 확립 전 까진 수동 실행이 한계
+globalContainer.runHierarchicalEvent(innerContainer);
+
+//위치 업데이트
+globalContainer.layoutGrid();
+
+```
+
+### 2025-03-14 (1)
+
+GridLayout > GridLayout > Phaser.GameObjects.Graphic 이 있을 때
+GridLayout1 에서 addToGrid 메서드로 GridLayout2를 추가 할 때 callbackRenderUpdate 옵션을 통해서 
+GridLayout2.addToGrid(Phaser.GameObjects.Graphic) 을 하면 
+GridLayout1 에서 GridLayout2 에 대한 callbackRenderUpdate 콜백을 실행하지 않기 때문에 별도의 콜백 옵션을 통해서 하위 객체 생성을 시도해야 할 것. 
+
+그런 버그가 있어서 곤란해 곤란해~ 
+
+GridLayout는 Phaser.GameObjects.Container 을 extend 한 객체.
+기존의 Container 의 속성과 동작은 그대로 하지만 내부 시스템으로 비시각적인 Grid 영역 계산을 하며 이 좌표를 얻는 것이 가능.  
+UI 제작을 체계적으로 하기 위해서 해당 로직을 작성하고 있으며. 아직 성능적인 테스트는 뒷전. 
+기능적으로 더 만들어야 할 것이 더 많음.
+
+rexui 플러그인은 제가 생각하던 기능이 아니였던 것 같지만 설계상 호환되므로 유지하고 필요 시 의존하기로 함
 
 ### 2025-03-13
 
@@ -21,7 +111,11 @@ layout 그려주는 기능 작업하는건 일시중지. ui 관런 컴포넌트 
 일단 상위 그리드, 하위 그리드로 나누고 계속 영역을 쪼개서 디자인 하고 싶은데 어디까지 가능한지 라이브러리 파악이 필요해보임.   
 
 ### 2025-03-07
-![게임화면](./게임화면_대충.png) 그림판으로 대충 이런 테마로 가기로 했음. 게임 플레이 화면을 중점으로 다른 ux/ui를 구현예정
+
+![게임화면](./게임화면_대충.png) 
+
+
+그림판으로 대충 이런 테마로 가기로 했음. 게임 플레이 화면을 중점으로 다른 ux/ui를 구현예정
 
 테마가 나왔으니 Pixabay, itch.io 같은 곳에서 이용 가능해보이는 무료 에셋을 조금 가져왔음. 
 한번적용을 해보고 sfx를 봐야겠음. 
@@ -34,7 +128,10 @@ asset 에서 파일명 끝이 __sppx__.png로 끝나면 해당 이미지의 프�
 이미지 에셋 관리 클레스와 로드 하는 부분도 이에 맞춰서 약간의 변동이 생겼음.
 
 
-![게임화면](./레이아웃용_그리드_예시.gif) 레이아웃 구현을 위한 기능을 작성함. 그리드 형식이고 이걸로 비율기반 계산이 가능해짐. 아직까진 문제는 없음. 
+![게임화면](./레이아웃용_그리드_예시.gif) 
+
+
+레이아웃 구현을 위한 기능을 작성함. 그리드 형식이고 이걸로 비율기반 계산이 가능해짐. 아직까진 문제는 없음. 
 계층적으로 동작함.
 
 ### 2025-03-06

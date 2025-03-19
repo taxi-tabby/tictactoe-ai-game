@@ -2,27 +2,17 @@
 
 import { use, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-// import * as tf from '@tensorflow/tfjs';
-// import Lottie from "lottie-react";
-// import useSound from 'use-sound';
-// import { Swiper, SwiperSlide } from 'swiper/react';
-// import * as Dialog from "@radix-ui/react-dialog";
-
-// import MonitorComponent from "../component/monitorComponent";
 
 import { AudioPlayer, AudioManager } from "../../schema/classes/audio";
 import { TicTacToeAI } from "../../schema/classes/model";
 import { ImageLoader } from "../../schema/classes/image";
-import assetList from '../../assets';
+import assetList from '../../game-assets-config';
 
-import 'swiper/css';
-import 'swiper/css/effect-fade';
-import 'swiper/css/pagination';
-import 'swiper/css/navigation';
+// import 'swiper/css';
+// import 'swiper/css/effect-fade';
+// import 'swiper/css/pagination';
+// import 'swiper/css/navigation';
 
-// import { Autoplay, EffectFade, Navigation, Pagination } from 'swiper/modules';
-// import { QuestionMarkIcon } from "@radix-ui/react-icons";
-// import { Table } from "@radix-ui/themes";
 
 import LoadingSceneComponent from "../scene/loading";
 import PhaserSceneComponent from "../scene/gamePhaser";

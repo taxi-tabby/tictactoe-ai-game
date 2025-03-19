@@ -1,19 +1,28 @@
 import React, { useEffect, useRef } from 'react';
-import { TicTacToeAI } from '../../schema/classes/model';
-import { AudioManager } from '../../schema/classes/audio';
-import { ImageLoader } from '../../schema/classes/image';
-import { tictactoeExtendsSpecialRules } from '../../schema/classes/tictactoeExtendsSpecialRules';
 
+
+import { motion } from 'framer-motion';
 import Phaser, { Game } from "phaser";
 import RexUIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin.js';
 
-import { motion } from 'framer-motion';
-import MonitorComponent from '../component/monitorComponent';
 
-import { EmptyScene } from './phaser/scene/empty';
-import { MainScene } from './phaser/scene/main';
-import { GameScene } from './phaser/scene/game';
+//xxxxx
+import MonitorComponent from '../../components/component/monitorComponent';
 
+
+//xxxxx
+// import { EmptyScene } from '@local/game/scene/empty';
+// import { MainScene } from '@local/game/scene/main';
+// import { GameScene } from '@local/game/scene/game';
+
+import { EmptyScene } from '../../phaser/scene/empty';
+import { MainScene } from '../../phaser/scene/main';
+import { GameScene } from '../../phaser/scene/game';
+
+
+import { TicTacToeAI } from '@/schema/classes/model';
+import { AudioManager } from '@/schema/classes/audio';
+import { ImageLoader } from '@/schema/classes/image';
 
 
 
@@ -36,13 +45,14 @@ export default function PhaserSceneComponent({
 
     //phaser game instance!
     const game = useRef<Game | null>(null);
-    // const gameBehavior = useRef<tictactoeExtendsSpecialRules | null>(null);
+
+    const xx: Phaser.Types.Core.PipelineConfig = {  };
 
     const phaserConfig: Phaser.Types.Core.GameConfig = {
         parent: 'phaser-game-container',
         width: 900,
         height: 600,
-        type: Phaser.AUTO,
+        type: Phaser.WEBGL,
         transparent: true,
         scene: [EmptyScene, MainScene, GameScene],
         banner: false,
@@ -52,10 +62,9 @@ export default function PhaserSceneComponent({
         mode: Phaser.Scale.RESIZE, // 화면 크기 변경을 허용
         // autoCenter: Phaser.Scale.CENTER_BOTH, // 화면 중앙에 위치
         
-        plugins: {
-            global: [
 
-            ],
+
+        plugins: {
             scene: [
                 {
                     key: 'rexUI',
@@ -65,8 +74,11 @@ export default function PhaserSceneComponent({
             ]
         },
 
-        pixelArt: true,
-        antialias: false,
+
+
+        pixelArt: false,
+        antialias: true,
+        antialiasGL: true,
         // input: {
         //     activePointers: 3, // 마우스 또는 터치포인터의 최대 수
         //     mouse: true,

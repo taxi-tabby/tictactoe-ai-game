@@ -1,5 +1,6 @@
 import VariableGetSet from "../getset";
-import { tictactoeGameBehavior } from './tictactoe';
+import { tictactoeGameBehavior }  from './tictactoe';
+// import { tictactoeGameBehavior }  from '@local-schema/classes/tictactoe'
 
 /**
  * 틱텍토 게임 확장 클래스

@@ -20,7 +20,7 @@ export class TicTacToeAI {
 
     
     
-    public async predict(key: string, boardSize: {x: number, y: number}, boardState: number[][]): Promise<number> {
+    public async predict(key: string, boardSize: {x: number, y: number}, boardState: number[][]): Promise<{index: number, probability: number}> {
         const model = this.models.get(key);
         if (!model) {
             throw new Error(`Model with key ${key} not found`);
@@ -46,28 +46,32 @@ export class TicTacToeAI {
         const emptyProbabilities = emptyIndices.map(index => probabilities[index]);
 
         // console.log('emptyIndices: ', emptyIndices);
-        console.log('probabilities: ', probabilities);
+        // console.log('probabilities: ', probabilities);
 
 
 
         let predictedMove: number;
+        let predictedMoveProbabilitie: number;
 
         // Epsilon-Greedy 방식 적용
         const epsilon = 0.1; // 탐험(exploration) 확률
         if (Math.random() < epsilon) {
-            console.log("랜덤");
+            // console.log("랜덤");
             // 무작위로 빈 칸 중 하나 선택
             const randomIndex = Math.floor(Math.random() * emptyIndices.length);
             predictedMove = emptyIndices[randomIndex];
+            predictedMoveProbabilitie = 1;
         } else {
-            console.log("높은 확률");
+
             // 빈 칸에서 가장 높은 확률의 위치 찾기
             const maxProbability = Math.max(...emptyProbabilities);  // 가장 높은 확률
             const maxProbabilityIndex = emptyProbabilities.indexOf(maxProbability);  // 해당 확률의 인덱스
             predictedMove = emptyIndices[maxProbabilityIndex];
+            predictedMoveProbabilitie = maxProbability; 
+            // console.log("높은 확률", maxProbability);
         }
 
-        return predictedMove;
+        return {index: predictedMove, probability: predictedMoveProbabilitie};
     }
     
     public async trainModel(key: string, trainingData: { boardState: number[][], action: number, reward: number }[]): Promise<void> {

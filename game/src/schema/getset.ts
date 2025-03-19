@@ -1,3 +1,4 @@
+
 class VariableGetSet<T> {
     private _value: T;
 
