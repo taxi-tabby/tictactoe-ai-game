@@ -21,6 +21,12 @@ import { TictactoeGameStatus } from "../../schema/classes/tictactoe";
 // // import { createAnimatedButton, createButton } from "@local/game/ helper/create/button";
 // import createLayerContainer, { GridLayout } from "@/components/scene/phaser/helper/create/layerContainer";
 
+type DimensionExpectMove = { 
+    row: number; col: number; rate: number, 
+    beforePos?: { row: number, col: number },
+    tile: any
+};
+
 
 export class GameScene extends Phaser.Scene {
 
@@ -75,100 +81,218 @@ export class GameScene extends Phaser.Scene {
     /**
      * 다중 차원에 의한 마르코프 결정을 통한 최적의 보드 수 계산
      */
-    private async boardPickNumberByMarkovDecisionOnMultiDimension(boardAsNumbers: number[][] = [], depth: number = 1) {
-        //보드를 현재의 구함           
+    private async boardPickNumberByMarkovDecisionOnMultiDimension(
+        boardAsNumbers: number[][] = [],
+        depth: number = 1,
+        _input: any = 1,
+        currentDepth: number = 0,
+        _beforePos?: { row: number, col: number }
+    ) {
         const modelLoader = this.registry.get('modelLoader') as TicTacToeAI;
-
         const boardRow = this.data.get('boardRow');
         const boardCol = this.data.get('boardCol');
         const boardWinCondition = this.data.get('boardWinCondition');
-
-
-
         const boardModel = `${boardCol}x${boardRow}_${boardWinCondition}`;
-        // Find the first empty cell (value 0) in the board
 
         let probabilitiesArray: {
             row: number;
             col: number;
             rate: number;
-            beforePos: { row: number, col: number } | undefined;
+            tile: any;
+            beforePos?: { row: number, col: number }
         }[][] = [];
 
-        // Ensure probabilitiesArray[level] exists and initialize if necessary
+        if (currentDepth > depth) return probabilitiesArray;
+
         while (probabilitiesArray.length <= depth) {
-            probabilitiesArray.push([]);
+            probabilitiesArray.push([]);  // Ensure each level exists
         }
+
+        let hasValidMoves = false;
 
         for (let row = 0; row < boardAsNumbers.length; row++) {
             for (let col = 0; col < boardAsNumbers[row].length; col++) {
                 const boardCopy = boardAsNumbers.map(row => row.slice());
 
-                if (boardCopy[row][col] === 0) {
+                if (boardCopy[row][col] === 0) {  // If the cell is empty, simulate a move
 
-                    boardCopy[row][col] = 2;//2를 넣는다는 가정
+                    hasValidMoves = true;
+                    boardCopy[row][col] = _input;  // Set the current player's move
+
+                    // Call model prediction for the current board state
                     const prediction = await modelLoader.predict(boardModel, { x: boardCol, y: boardRow }, boardCopy);
 
-                    probabilitiesArray[0].push({
+                    probabilitiesArray[currentDepth].push({
                         col: col,
                         row: row,
                         rate: prediction.probability,
-                        beforePos: undefined
+                        tile: _input,
+                        beforePos: _beforePos
                     });
 
-                    //다음 아무칸이나 넣고 순환
-                    for (let rowNext = 0; rowNext < boardCopy.length; rowNext++) {
-                        for (let colNext = 0; colNext < boardCopy[rowNext].length; colNext++) {
-                            const boardCopy2 = boardCopy.map(row => row.slice());
-                            if (boardCopy2[rowNext][colNext] === 0) {
-                                boardCopy2[rowNext][colNext] = 1;//1를 넣는다는 가정
+                    // Recursively call for the next depth level with alternate player's turn
+                    const nextLevelProbabilities = await this.boardPickNumberByMarkovDecisionOnMultiDimension(
+                        boardCopy,
+                        depth,
+                        _input === 1 ? 2 : 1, // 번갈아서 확률 체크 (홀짝으로 누군가의 수 계산을 할 것인지 구분 가능) (player 1 vs player 2)
+                        currentDepth + 1,
+                        { row, col } // 늙따리 값 추가
+                    );
 
-                                const prediction2 = await modelLoader.predict(boardModel, { x: boardCol, y: boardRow }, boardCopy2);
-
-                                probabilitiesArray[1].push({
-                                    col: colNext,
-                                    row: rowNext,
-                                    rate: prediction2.probability,
-                                    beforePos: { row, col }
-                                });
-                                // const nextLevelProbabilities = await this.boardPickNumberByMarkovDecisionOnMultiDimension(boardCopy2, level + 1);
-                            }
-
+                    // 모든 가능성을 병합
+                    for (let i = currentDepth + 1; i <= depth; i++) {
+                        if (nextLevelProbabilities[i]) {
+                            probabilitiesArray[i] = probabilitiesArray[i].concat(nextLevelProbabilities[i]);
                         }
                     }
-
                 }
             }
         }
 
-        let bestCombinedMove = {
-            level0: { row: -1, col: -1, rate: -Infinity },
-            level1: { row: -1, col: -1, rate: -Infinity },
-            combinedRate: -Infinity
-        };
+        // If no valid moves were found at this level, log and return the probabilities array
+        if (!hasValidMoves) {
+            console.log(`No valid moves at depth ${currentDepth}. Returning empty array for this level.`);
+            probabilitiesArray[currentDepth] = probabilitiesArray[currentDepth] || [];
+        }
 
-        probabilitiesArray[0].forEach(level0Move => {
-            probabilitiesArray[1].forEach(level1Move => {
-                if (
-                    level1Move.beforePos &&
-                    level1Move.beforePos.row === level0Move.row &&
-                    level1Move.beforePos.col === level0Move.col
-                ) {
-                    const combinedRate = level0Move.rate + level1Move.rate;
-                    if (combinedRate > bestCombinedMove.combinedRate) {
-                        bestCombinedMove = {
-                            level0: level0Move,
-                            level1: level1Move,
-                            combinedRate
-                        };
+        // Ensure the last depth level has an empty array if no moves were added
+        if (probabilitiesArray[depth].length === 0) {
+            probabilitiesArray[depth] = [];
+        }
+
+        return probabilitiesArray;
+    }
+
+
+    private getBestMoveOnDimension(data: any[], targetValue?: any) {
+        let bestCombinedMove = {
+            combinedRate: -Infinity,
+            moves: [] as DimensionExpectMove[]
+        };
+    
+        // Iterate through all possible starting moves at level 0
+        for (let level0Move of data[0] || []) {
+            let paths: { combinedRate: number; moves: DimensionExpectMove[] }[] = [{
+                combinedRate: level0Move.rate,
+                moves: [{ row: level0Move.row, col: level0Move.col, rate: level0Move.rate, tile: level0Move.tile }]
+            }];
+    
+            // For each subsequent level
+            for (let currentLevel = 1; currentLevel < data.length; currentLevel++) {
+    
+                let newPaths: { combinedRate: number; moves: DimensionExpectMove[] }[] = [];
+    
+                // Iterate through the existing paths
+                for (let path of paths) {
+                    for (let levelMove of data[currentLevel] || []) {
+                        let newPath: { combinedRate: number; moves: DimensionExpectMove[] } | undefined = undefined;
+    
+                        if (levelMove.beforePos?.row === path.moves[path.moves.length - 1].row && levelMove.beforePos?.col === path.moves[path.moves.length - 1].col) {
+                            
+                            newPath = {
+                                combinedRate: (targetValue === undefined || (levelMove.tile == targetValue || currentLevel % 2 === 0)) ? path.combinedRate + levelMove.rate : path.combinedRate,
+                                moves: [...path.moves, {
+                                    row: levelMove.row, 
+                                    col: levelMove.col, 
+                                    rate: levelMove.rate, 
+                                    tile: levelMove.tile, 
+                                    beforePos: { row: levelMove.beforePos.row, col: levelMove.beforePos.col }
+                                }]
+                            };
+                        }
+                        
+    
+                        // If a valid path was found, push it to the new paths
+                        if (newPath != undefined) {
+                            newPaths.push(newPath);
+                        }
                     }
                 }
-            });
-        });
-
-        // console.log(bestCombinedMove.level0, bestCombinedMove.level1, bestCombinedMove.combinedRate);
-        return bestCombinedMove;
+    
+                // Update paths to be the new paths found at this level
+                paths = newPaths;
+            }
+    
+            // After processing all levels, find the path with the highest combined rate
+            for (let path of paths) {
+                if (path.combinedRate > bestCombinedMove.combinedRate) {
+                    bestCombinedMove = {
+                        combinedRate: path.combinedRate,
+                        moves: path.moves
+                    };
+                }
+            }
+        }
+    
+        // Log the results
+        console.log("##--------------------------------------##");
+        console.log('Original dimension data:', data);
+        console.log('Moves:', bestCombinedMove.moves);
+        console.log("Best Combined Rate:", bestCombinedMove.combinedRate);
     }
+    
+    
+
+    // private getBestMoveOnDimension(data: any[], targetValue?: any) {
+    //     let bestCombinedMove = {
+    //         combinedRate: -Infinity,
+    //         moves: [] as DimensionExpectMove[]
+    //     };
+
+    //     // Iterate through all possible starting moves at level 0
+    //     for (let level0Move of data[0] || []) {
+    //         let paths: { combinedRate: number; moves: DimensionExpectMove[] }[] = [{
+    //             combinedRate: level0Move.rate,
+    //             moves: [{ row: level0Move.row, col: level0Move.col, rate: level0Move.rate, tile: level0Move.tile }]
+    //         }];
+
+    //         // For each subsequent level
+    //         for (let currentLevel = 1; currentLevel < data.length; currentLevel++) {
+
+    //             let newPaths: { combinedRate: number; moves: DimensionExpectMove[] }[] = [];
+
+    //             // console.log(paths);
+    //             let i = 0;
+    //             for (let path of paths) {
+
+    //                 for (let levelMove of data[currentLevel] || []) {
+
+    //                     let newPath: { combinedRate: number; moves: DimensionExpectMove[] } | undefined = undefined;
+    //                     // console.log(paths);
+    //                     if (levelMove.beforePos?.row === path.moves[path.moves.length - 1].row && levelMove.beforePos?.col === path.moves[path.moves.length - 1].col) {
+    //                         newPath = {
+    //                             combinedRate: path.combinedRate + levelMove.rate,
+    //                             moves: [...path.moves, { row: levelMove.row, col: levelMove.col, rate: levelMove.rate, tile: levelMove.tile, beforePos: { row: levelMove.beforePos.row, col: levelMove.beforePos.col } }]
+    //                         }
+    //                     }
+    //                     // console.log(newPath);
+    //                     if (newPath != undefined) {
+    //                         newPaths.push(newPath);
+    //                     }
+
+    //                     i++;
+    //                 }
+    //             }
+    //             paths = newPaths;
+    //         }
+
+
+    //         // After processing all levels, find the path with the highest combined rate
+    //         for (let path of paths) {
+    //             if (path.combinedRate > bestCombinedMove.combinedRate) {
+    //                 bestCombinedMove = {
+    //                     combinedRate: path.combinedRate,
+    //                     moves: path.moves
+    //                 };
+    //             }
+    //         }
+    //     }
+
+    //     console.log("##--------------------------------------##");
+    //     console.log('Original dimension data:', data);
+    //     console.log('Moves:', bestCombinedMove.moves);
+    //     console.log("Best Combined Rate:", bestCombinedMove.combinedRate);
+    // }
 
 
     private calculateTimeDifference(
@@ -578,21 +702,25 @@ export class GameScene extends Phaser.Scene {
                                     const boardCol = this.data.get('boardCol');
                                     const boardWinCondition = this.data.get('boardWinCondition');
 
-                                    const result = await this.boardPickNumberByMarkovDecisionOnMultiDimension(system.getBoardAsNumbers());
+                                    const result1 = await this.boardPickNumberByMarkovDecisionOnMultiDimension(system.getBoardAsNumbers(), 2, system.getCurrentPlayer());
+                                    console.log(result1);
+                                    
+                                    const result2 = this.getBestMoveOnDimension(result1, system.getCurrentPlayer());
+                                    console.log(result2);
 
-                                        system.makeMove(result.level0.row, result.level0.col);
+                                    // system.makeMove(result.level0.row, result.level0.col);
 
-                                        const check = system.checkWinner();
-                                        console.log('asasas',check);
-                                        renderBoard();
-                                        renderUI();
+                                    // const check = system.checkWinner();
+                                    // console.log('asasas',check);
+                                    // renderBoard();
+                                    // renderUI();
 
-                                        if (check.type == 'status' && check.value == TictactoeGameStatus.DRAW) {
-                                            setTimeout(() => {
-                                                winLineGraphics.clear();
-                                                nextRoundGo();
-                                            }, 500);
-                                        }
+                                    // if (check.type == 'status' && check.value == TictactoeGameStatus.DRAW) {
+                                    //     setTimeout(() => {
+                                    //         winLineGraphics.clear();
+                                    //         nextRoundGo();
+                                    //     }, 500);
+                                    // }
 
                                     // modelLoader.predict(`${boardCol}x${boardRow}_${boardWinCondition}`, { x: boardCol, y: boardRow }, system.getBoardAsNumbers()).then((result) => {
                                     //     const aiMoveX = result % boardCol;

@@ -13,6 +13,14 @@ Currently testing features.
 
 ## Development Notes
 
+### 2025-03-21 (1)
+
+![tictactoe_model_multidimension.drawio.png](./readme/tictactoe_model_multidimension.drawio.png) 
+
+브라우저에서 돌리는 것 자체가 불가하다는 결론. 시작하기 전에 이미 알고 있었고 직접 계산해보니 아득하지만
+그렇다고 안해볼 것은아니였고 어찌 적당한 결론을 내야겠지
+
+
 ### 2025-03-19 (1)
 
 하.. 일단 4x4_4 중심으로 개발하는데 성능이 구려서 큰일이네 분명 5천개 샘플로 학습해서 그런가 대충 수학적으로 게임 보드가 43,046,721 개가 필요하다고 하는데 너무 부족해서 그런가
@@ -35,7 +43,7 @@ containerObject.sort('depth'); // 다음 메서드를 호출해서 랜더링 뒤
 
 ### 2025-03-17 (1)
 
-![에셋1](./에셋_XO_ANIMATION1.gif) 
+![에셋_XO_ANIMATION1.gif](./readme/에셋_XO_ANIMATION1.gif) 
 
 에셋 그리기 하는데 잘 그릴 방법이 없어서 그냥 꼬물딱 꼬물딱 애니메이션으로 추출. 추출한대로 잘 그려지는지 랜더링 테스트를 해야 함.
 
