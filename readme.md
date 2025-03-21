@@ -15,7 +15,7 @@ Currently testing features.
 
 ### 2025-03-21 (1)
 
-![tictactoe_model_multidimension.drawio.png](./readme/tictactoe_model_multidimension.drawio.png) 
+![tictactoe_model_multidimension.drawio_2.png](./readme/tictactoe_model_multidimension.drawio.png) 
 
 브라우저에서 돌리는 것 자체가 불가하다는 결론. 시작하기 전에 이미 알고 있었고 직접 계산해보니 아득하지만
 그렇다고 안해볼 것은아니였고 어찌 적당한 결론을 내야겠지.
